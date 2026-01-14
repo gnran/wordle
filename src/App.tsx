@@ -55,15 +55,17 @@ function App() {
       rows.push(wordToLetters(guess, states));
     });
 
-    // Добавляем текущую строку
-    const currentRowLetters: Letter[] = [];
-    for (let i = 0; i < WORD_LENGTH; i++) {
-      currentRowLetters.push({
-        value: gameState.currentGuess[i] || '',
-        state: 'empty'
-      });
+    // Добавляем текущую строку только если игра еще идет
+    if (gameState.gameStatus === 'playing') {
+      const currentRowLetters: Letter[] = [];
+      for (let i = 0; i < WORD_LENGTH; i++) {
+        currentRowLetters.push({
+          value: gameState.currentGuess[i] || '',
+          state: 'empty'
+        });
+      }
+      rows.push(currentRowLetters);
     }
-    rows.push(currentRowLetters);
 
     // Заполняем оставшиеся строки пустыми буквами
     while (rows.length < MAX_ATTEMPTS) {
