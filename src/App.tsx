@@ -271,7 +271,7 @@ function App() {
     <div className="min-h-screen bg-gray-900 flex flex-col items-center py-8 px-4">
       <header className="w-full max-w-2xl mb-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl sm:text-3xl font-bold text-center flex-1">
+          <h1 className="text-4xl sm:text-5xl font-bold text-center flex-1">
             WORDLE
           </h1>
           <button
@@ -303,20 +303,12 @@ function App() {
         letterStates={letterStates}
       />
 
-      <div className="flex gap-2 justify-center mt-6">
-        <button
-          onClick={handleEnter}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded transition-colors"
-        >
-          ENTER
-        </button>
-        <button
-          onClick={handleNewGame}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded transition-colors"
-        >
-          New Game
-        </button>
-      </div>
+      <button
+        onClick={handleNewGame}
+        className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded transition-colors"
+      >
+        Новая игра
+      </button>
 
       <StatsModal
         stats={stats}
