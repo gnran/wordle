@@ -1,0 +1,27 @@
+{
+    "accountAssociation": {
+      "header": "",
+      "payload": "",
+      "signature": ""
+    },
+    "miniapp": {
+      "version": "1",
+      "name": "Wordle",
+      "homeUrl": "https://wordle-six-orcin.vercel.app",
+      "iconUrl": "",
+      "splashImageUrl": "",
+      "splashBackgroundColor": "",
+      "webhookUrl": "",
+      "subtitle": "Угадай слово за 6 попыток",
+      "description": "Классическая игра Wordle - угадай слово за 6 попыток. Проверь свой словарный запас!",
+      "screenshotUrls": [""],
+      "primaryCategory": "games",
+      "tags": ["wordle", "game", "puzzle", "word"],
+      "heroImageUrl": "",
+      "tagline": "Играй и развивайся",
+      "ogTitle": "Wordle - Угадай слово",
+      "ogDescription": "Классическая игра Wordle - угадай слово за 6 попыток",
+      "ogImageUrl": "",
+      "noindex": true
+    }
+  }
