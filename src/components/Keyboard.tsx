@@ -64,14 +64,6 @@ export const Keyboard = ({ onKeyPress, onEnter, onDelete, letterStates }: Keyboa
           ⌫
         </button>
       </div>
-      <div className="flex gap-1 justify-center">
-        <button
-          onClick={onEnter}
-          className="bg-blue-600 hover:bg-blue-700 px-8 py-3 sm:px-12 sm:py-4 text-sm sm:text-base font-semibold rounded transition-colors active:scale-95 text-white"
-        >
-          ENTER
-        </button>
-      </div>
     </div>
   );
 };

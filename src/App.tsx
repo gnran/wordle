@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { sdk } from '@farcaster/miniapp-sdk';
 import { GameState, UserStats, Letter, LetterState } from './types';
 import { getRandomWord, isValidWord } from './data/words';
 import { evaluateGuess, wordToLetters } from './utils/gameLogic';
@@ -8,7 +7,6 @@ import { GameBoard } from './components/GameBoard';
 import { Keyboard } from './components/Keyboard';
 import { StatsModal } from './components/StatsModal';
 import { GameOverModal } from './components/GameOverModal';
-
 
 const MAX_ATTEMPTS = 6;
 const WORD_LENGTH = 5;
@@ -38,11 +36,6 @@ function App() {
   const [showGameOver, setShowGameOver] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Уведомляем SDK о готовности приложения
-  useEffect(() => {
-    sdk.actions.ready();
-  }, []);
-  
   // Сохраняем состояние игры при изменении
   useEffect(() => {
     if (gameState.gameStatus === 'playing') {
@@ -62,17 +55,15 @@ function App() {
       rows.push(wordToLetters(guess, states));
     });
 
-    // Добавляем текущую строку только если игра еще идет
-    if (gameState.gameStatus === 'playing') {
-      const currentRowLetters: Letter[] = [];
-      for (let i = 0; i < WORD_LENGTH; i++) {
-        currentRowLetters.push({
-          value: gameState.currentGuess[i] || '',
-          state: 'empty'
-        });
-      }
-      rows.push(currentRowLetters);
+    // Добавляем текущую строку
+    const currentRowLetters: Letter[] = [];
+    for (let i = 0; i < WORD_LENGTH; i++) {
+      currentRowLetters.push({
+        value: gameState.currentGuess[i] || '',
+        state: 'empty'
+      });
     }
+    rows.push(currentRowLetters);
 
     // Заполняем оставшиеся строки пустыми буквами
     while (rows.length < MAX_ATTEMPTS) {
@@ -280,7 +271,7 @@ function App() {
     <div className="min-h-screen bg-gray-900 flex flex-col items-center py-8 px-4">
       <header className="w-full max-w-2xl mb-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-center flex-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-center flex-1">
             WORDLE
           </h1>
           <button
@@ -312,12 +303,20 @@ function App() {
         letterStates={letterStates}
       />
 
-      <button
-        onClick={handleNewGame}
-        className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded transition-colors"
-      >
-        Новая игра
-      </button>
+      <div className="flex gap-2 justify-center mt-6">
+        <button
+          onClick={handleEnter}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded transition-colors"
+        >
+          ENTER
+        </button>
+        <button
+          onClick={handleNewGame}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded transition-colors"
+        >
+          New Game
+        </button>
+      </div>
 
       <StatsModal
         stats={stats}
