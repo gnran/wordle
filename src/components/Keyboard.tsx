@@ -54,6 +54,12 @@ export const Keyboard = ({ onKeyPress, onEnter, onDelete, letterStates }: Keyboa
         ))}
       </div>
       <div className="flex gap-1 justify-center flex-wrap">
+        <button
+          onClick={onEnter}
+          className="bg-blue-600 hover:bg-blue-500 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base font-semibold rounded transition-colors active:scale-95 text-white"
+        >
+          Enter
+        </button>
         {thirdRow.map((key) => (
           <KeyButton key={key} letter={key} onClick={() => onKeyPress(key)} />
         ))}
