@@ -321,7 +321,7 @@ function App() {
         onThemeToggle={handleThemeToggle}
       />
 
-      <main className="flex-1 flex flex-col items-center justify-center py-2 sm:py-4 px-4">
+      <main className="flex-1 flex flex-col items-center justify-center py-2 px-4">
         <div className="w-full max-w-2xl">
           <header className="text-center mb-4 sm:mb-6">
             <h1 className="text-2xl sm:text-3xl font-bold text-blue-500 dark:text-blue-400 mb-2">

@@ -41,7 +41,7 @@ export const Keyboard = ({ onKeyPress, onDelete, letterStates }: KeyboardProps) 
   );
 
   return (
-    <div className="flex flex-col gap-2 max-w-2xl mx-auto px-2">
+    <div className="flex flex-col gap-2 max-w-2xl mx-auto px-1 sm:px-2">
       <div className="flex gap-1 justify-center flex-wrap">
         {firstRow.map((key) => (
           <KeyButton key={key} letter={key} onClick={() => onKeyPress(key)} />
