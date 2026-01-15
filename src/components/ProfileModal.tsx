@@ -50,21 +50,28 @@ export const ProfileModal = ({ isOpen, onClose, stats, onResetStats, userInfo }:
         const txLink = `https://basescan.org/tx/${txHash}`;
         setSubmitSuccess(
           <div>
-            <div>Статистика успешно отправлена!</div>
+            <div className="font-semibold mb-2">✅ Статистика успешно отправлена в блокчейн!</div>
+            <div className="text-sm mb-2">
+              Транзакция подтверждена. Данные записаны в контракт.
+            </div>
             <a
               href={txLink}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 dark:text-blue-400 underline text-sm mt-1 block"
             >
-              Просмотреть транзакцию: {txHash.slice(0, 10)}...
+              📊 Просмотреть транзакцию на BaseScan: {txHash.slice(0, 10)}...
             </a>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Примечание: Транзакция может не сразу появиться в истории кошелька. 
+              Проверьте статус на BaseScan по ссылке выше.
+            </div>
           </div>
         );
-        // Очищаем сообщение через 10 секунд
+        // Очищаем сообщение через 15 секунд
         setTimeout(() => {
           setSubmitSuccess(null);
-        }, 10000);
+        }, 15000);
       } else {
         // Если есть txHash, но success = false, значит транзакция отправлена, но не подтверждена
         if (result.txHash) {

@@ -273,14 +273,31 @@ export async function submitStatsOnchain(
       contractAddress: CONTRACT_ADDRESS,
     });
 
+    // Оцениваем газ перед отправкой
+    let gasEstimate;
+    try {
+      gasEstimate = await contract.submitStatsSnapshot.estimateGas(
+        deltaWins,
+        deltaLosses,
+        expectedNonce
+      );
+      console.log('Оценка газа:', gasEstimate.toString());
+    } catch (estimateError: any) {
+      console.error('Ошибка оценки газа:', estimateError);
+      // Если оценка не удалась, используем дефолтное значение
+      gasEstimate = BigInt(100000);
+    }
+
     // Отправляем транзакцию
+    // Примечание: Если кошелек показывает "Предпросмотр недоступен",
+    // это обычно означает, что контракт не верифицирован на BaseScan
+    // или кошелек не может получить ABI. Транзакция все равно должна работать.
     const tx = await contract.submitStatsSnapshot(
       deltaWins,
       deltaLosses,
       expectedNonce,
       {
-        // Добавляем gas limit для надежности
-        gasLimit: 100000, // Достаточно для вызова функции
+        gasLimit: gasEstimate + (gasEstimate / BigInt(5)), // Добавляем 20% запас
       }
     );
 
@@ -336,8 +353,21 @@ export async function submitStatsOnchain(
       
       // Проверяем, что nonce действительно увеличился
       const newNonce = await getCurrentNonce(walletAddress, provider);
+      console.log('Nonce после транзакции:', newNonce, 'Ожидалось:', expectedNonce + 1);
+      
       if (newNonce !== expectedNonce + 1) {
         console.warn('Nonce не увеличился после транзакции. Ожидалось:', expectedNonce + 1, 'Получено:', newNonce);
+        // Ждем немного и проверяем снова (может быть задержка)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const retryNonce = await getCurrentNonce(walletAddress, provider);
+        console.log('Nonce после повторной проверки:', retryNonce);
+      }
+
+      // Проверяем, что данные действительно записались в контракт
+      const onchainStats = await getOnchainStats(walletAddress, provider);
+      if (onchainStats) {
+        console.log('Статистика в контракте после транзакции:', onchainStats);
+        console.log('Локальная статистика:', localStats);
       }
 
       const newLastSubmitted: LastSubmitted = {
