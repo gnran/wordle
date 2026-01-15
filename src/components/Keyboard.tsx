@@ -28,11 +28,12 @@ export const Keyboard = ({ onKeyPress, onDelete, letterStates }: KeyboardProps) 
       onClick={onClick}
         className={`
         ${getKeyColor(letter)}
-        px-2 py-1.5 sm:px-3 sm:py-3 md:px-4 md:py-4
-        text-xs sm:text-sm md:text-base font-semibold
+        px-3 py-2 sm:px-4 sm:py-3 md:px-5 md:py-4
+        text-sm sm:text-base md:text-lg font-semibold
         rounded
         transition-colors
         active:scale-95
+        min-w-[2.5rem] sm:min-w-[3rem] md:min-w-[3.5rem]
         ${letterStates[letter] && letterStates[letter] !== 'empty' ? 'text-white' : 'text-gray-800 dark:text-gray-200'}
       `}
     >
@@ -41,24 +42,24 @@ export const Keyboard = ({ onKeyPress, onDelete, letterStates }: KeyboardProps) 
   );
 
   return (
-    <div className="flex flex-col gap-2 max-w-2xl mx-auto px-2">
-      <div className="flex gap-1 justify-center flex-wrap">
+    <div className="flex flex-col gap-2 max-w-4xl mx-auto px-2 w-full">
+      <div className="flex gap-1.5 sm:gap-2 justify-center flex-wrap">
         {firstRow.map((key) => (
           <KeyButton key={key} letter={key} onClick={() => onKeyPress(key)} />
         ))}
       </div>
-      <div className="flex gap-1 justify-center flex-wrap">
+      <div className="flex gap-1.5 sm:gap-2 justify-center flex-wrap">
         {secondRow.map((key) => (
           <KeyButton key={key} letter={key} onClick={() => onKeyPress(key)} />
         ))}
       </div>
-      <div className="flex gap-1 justify-center flex-wrap">
+      <div className="flex gap-1.5 sm:gap-2 justify-center flex-wrap">
         {thirdRow.map((key) => (
           <KeyButton key={key} letter={key} onClick={() => onKeyPress(key)} />
         ))}
         <button
           onClick={onDelete}
-          className="bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 px-2 py-1.5 sm:px-4 sm:py-3 md:px-6 md:py-4 text-xs sm:text-sm md:text-base font-semibold rounded transition-colors active:scale-95 text-gray-800 dark:text-gray-200"
+          className="bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 px-3 py-1.5 sm:px-5 sm:py-3 md:px-8 md:py-4 text-xs sm:text-sm md:text-base font-semibold rounded transition-colors active:scale-95 text-gray-800 dark:text-gray-200"
         >
           ⌫
         </button>

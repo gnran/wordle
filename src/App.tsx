@@ -321,10 +321,10 @@ function App() {
         onThemeToggle={handleThemeToggle}
       />
 
-      <main className="flex-1 flex flex-col items-center justify-center py-4 sm:py-8 px-4">
+      <main className="flex-1 flex flex-col items-center justify-center py-2 sm:py-4 px-4">
         <div className="w-full max-w-2xl">
-          <header className="text-center mb-6 sm:mb-8">
-            <h1 className="text-3xl sm:text-5xl font-bold text-blue-500 dark:text-blue-400 mb-2">
+          <header className="text-center mb-4 sm:mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-blue-500 dark:text-blue-400 mb-2">
               WORDLY
             </h1>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
