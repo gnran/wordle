@@ -176,29 +176,29 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
           <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-4">All-time performance</h3>
           
           <div className="grid grid-cols-2 gap-2 sm:gap-3">
-            {/* Total games - dark purple-blue */}
-            <div className="bg-[#2a1f3d] dark:bg-[#2a1f3d] rounded-lg p-2 sm:p-4">
+            {/* Total games */}
+            <div className="bg-blue-900/60 dark:bg-blue-900/60 rounded-lg p-2 sm:p-4">
               <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">TOTAL GAMES</div>
               <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{stats.totalGames}</div>
               <div className="text-gray-400 text-xs">All puzzles played</div>
             </div>
 
-            {/* Wins - dark teal-green */}
-            <div className="bg-[#1a2f2a] dark:bg-[#1a2f2a] rounded-lg p-2 sm:p-4">
+            {/* Wins */}
+            <div className="bg-blue-900/60 dark:bg-blue-900/60 rounded-lg p-2 sm:p-4">
               <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">WINS</div>
               <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{stats.wins}</div>
               <div className="text-gray-400 text-xs">Games won</div>
             </div>
 
-            {/* Losses - dark purple-blue */}
-            <div className="bg-[#2a1f3d] dark:bg-[#2a1f3d] rounded-lg p-2 sm:p-4">
+            {/* Losses */}
+            <div className="bg-blue-900/60 dark:bg-blue-900/60 rounded-lg p-2 sm:p-4">
               <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">LOSSES</div>
               <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{stats.losses}</div>
               <div className="text-gray-400 text-xs">Games lost</div>
             </div>
 
-            {/* Win percentage - dark teal-green */}
-            <div className="bg-[#1a2f2a] dark:bg-[#1a2f2a] rounded-lg p-2 sm:p-4">
+            {/* Win percentage */}
+            <div className="bg-blue-900/60 dark:bg-blue-900/60 rounded-lg p-2 sm:p-4">
               <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">WIN PERCENTAGE</div>
               <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">
                 {stats.winPercentage > 0 ? `${stats.winPercentage.toFixed(1)}%` : '0%'}
