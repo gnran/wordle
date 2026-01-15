@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { sdk } from '@farcaster/miniapp-sdk';
 import { GameState, UserStats, Letter, LetterState } from './types';
 import { getRandomWord, isValidWord } from './data/words';
 import { evaluateGuess, wordToLetters } from './utils/gameLogic';
@@ -7,6 +8,7 @@ import { GameBoard } from './components/GameBoard';
 import { Keyboard } from './components/Keyboard';
 import { StatsModal } from './components/StatsModal';
 import { GameOverModal } from './components/GameOverModal';
+
 
 const MAX_ATTEMPTS = 6;
 const WORD_LENGTH = 5;
@@ -36,6 +38,11 @@ function App() {
   const [showGameOver, setShowGameOver] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Уведомляем SDK о готовности приложения
+  useEffect(() => {
+    sdk.actions.ready();
+  }, []);
+  
   // Сохраняем состояние игры при изменении
   useEffect(() => {
     if (gameState.gameStatus === 'playing') {
@@ -55,15 +62,17 @@ function App() {
       rows.push(wordToLetters(guess, states));
     });
 
-    // Добавляем текущую строку
-    const currentRowLetters: Letter[] = [];
-    for (let i = 0; i < WORD_LENGTH; i++) {
-      currentRowLetters.push({
-        value: gameState.currentGuess[i] || '',
-        state: 'empty'
-      });
+    // Добавляем текущую строку только если игра еще идет
+    if (gameState.gameStatus === 'playing') {
+      const currentRowLetters: Letter[] = [];
+      for (let i = 0; i < WORD_LENGTH; i++) {
+        currentRowLetters.push({
+          value: gameState.currentGuess[i] || '',
+          state: 'empty'
+        });
+      }
+      rows.push(currentRowLetters);
     }
-    rows.push(currentRowLetters);
 
     // Заполняем оставшиеся строки пустыми буквами
     while (rows.length < MAX_ATTEMPTS) {
