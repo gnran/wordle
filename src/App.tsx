@@ -396,21 +396,16 @@ function App() {
             <Keyboard
               onKeyPress={handleKeyPress}
               onDelete={handleDelete}
+              onEnter={handleEnter}
               letterStates={letterStates}
             />
             
             <div className="flex gap-2 justify-center mt-4 sm:mt-6 px-2">
               <button
                 onClick={handleNewGame}
-                className="flex-1 bg-blue-800 hover:bg-blue-700 text-gray-200 font-semibold py-2 px-4 rounded transition-colors text-sm sm:text-base"
+                className="bg-blue-900 hover:bg-blue-800 border border-gray-600 dark:border-gray-500 text-gray-200 font-semibold py-2 px-4 rounded transition-colors text-sm sm:text-base"
               >
                 New Game
-              </button>
-              <button
-                onClick={handleEnter}
-                className="flex-1 bg-blue-800 hover:bg-blue-700 text-gray-200 font-semibold py-2 px-4 rounded transition-colors text-sm sm:text-base"
-              >
-                ENTER
               </button>
             </div>
           </div>
