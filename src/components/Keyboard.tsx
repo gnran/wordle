@@ -29,9 +29,9 @@ export const Keyboard = ({ onKeyPress, onDelete, onEnter, letterStates }: Keyboa
       onClick={onClick}
       className={`
         ${getKeyColor(letter)}
-        min-w-[24px] h-10 px-1
-        sm:min-w-[30px] sm:h-12 sm:px-1.5
-        md:min-w-[32px] md:h-14 md:px-2
+        min-w-[20px] h-11 px-1
+        sm:min-w-[26px] sm:h-14 sm:px-1.5
+        md:min-w-[28px] md:h-16 md:px-2
         text-xs sm:text-sm md:text-base font-bold
         rounded-lg
         transition-colors
@@ -46,7 +46,7 @@ export const Keyboard = ({ onKeyPress, onDelete, onEnter, letterStates }: Keyboa
   );
 
   return (
-    <div className="flex flex-col gap-1.5 sm:gap-2 mx-auto w-full max-w-full px-1 sm:px-2">
+    <div className="flex flex-col gap-2.5 sm:gap-3 md:gap-3.5 mx-auto w-full max-w-full px-1 sm:px-2">
       {/* First row: 10 keys - defines the width */}
       <div className="flex gap-1 sm:gap-2 md:gap-2.5 justify-start w-full max-w-full">
         {firstRow.map((key) => (
@@ -65,7 +65,7 @@ export const Keyboard = ({ onKeyPress, onDelete, onEnter, letterStates }: Keyboa
       <div className="flex gap-1 sm:gap-2 md:gap-2.5 justify-start w-full max-w-full">
         <button
           onClick={onDelete}
-          className="bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 min-w-[42px] h-10 sm:min-w-[56px] sm:h-12 md:min-w-[64px] md:h-14 text-xs sm:text-sm md:text-base font-semibold rounded-lg transition-colors active:scale-95 text-gray-800 dark:text-gray-200 flex items-center justify-center flex-shrink-0 px-2 sm:px-3"
+          className="bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 min-w-[48px] h-11 sm:min-w-[64px] sm:h-14 md:min-w-[72px] md:h-16 text-xs sm:text-sm md:text-base font-semibold rounded-lg transition-colors active:scale-95 text-gray-800 dark:text-gray-200 flex items-center justify-center flex-shrink-0 px-2 sm:px-3"
         >
           ⌫
         </button>
@@ -74,7 +74,7 @@ export const Keyboard = ({ onKeyPress, onDelete, onEnter, letterStates }: Keyboa
         ))}
         <button
           onClick={onEnter}
-          className="bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 min-w-[42px] h-10 sm:min-w-[56px] sm:h-12 md:min-w-[64px] md:h-14 text-xs sm:text-sm md:text-base font-semibold rounded-lg transition-colors active:scale-95 text-gray-800 dark:text-gray-200 flex items-center justify-center flex-shrink-0 px-2 sm:px-3"
+          className="bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 min-w-[48px] h-11 sm:min-w-[64px] sm:h-14 md:min-w-[72px] md:h-16 text-xs sm:text-sm md:text-base font-semibold rounded-lg transition-colors active:scale-95 text-gray-800 dark:text-gray-200 flex items-center justify-center flex-shrink-0 px-2 sm:px-3"
         >
           Enter
         </button>
