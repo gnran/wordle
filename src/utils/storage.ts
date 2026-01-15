@@ -1,8 +1,9 @@
-import { GameState, UserStats } from '../types';
+import { GameState, UserStats, LastSubmitted } from '../types';
 
 const STORAGE_KEY = 'wordle-game-state';
 const STATS_KEY = 'wordle-stats';
 const LAST_PLAYED_KEY = 'wordle-last-played';
+const LAST_SUBMITTED_KEY = 'wordle-last-submitted';
 
 /**
  * Сохранить состояние игры в localStorage
@@ -110,7 +111,45 @@ export const resetStats = (): void => {
     localStorage.removeItem(STATS_KEY);
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(LAST_PLAYED_KEY);
+    localStorage.removeItem(LAST_SUBMITTED_KEY);
   } catch (error) {
     console.error('Ошибка сброса статистики:', error);
+  }
+};
+
+/**
+ * Сохранить информацию о последней отправке статистики в блокчейн
+ */
+export const saveLastSubmitted = (lastSubmitted: LastSubmitted): void => {
+  try {
+    localStorage.setItem(LAST_SUBMITTED_KEY, JSON.stringify(lastSubmitted));
+  } catch (error) {
+    console.error('Ошибка сохранения последней отправки:', error);
+  }
+};
+
+/**
+ * Загрузить информацию о последней отправке статистики в блокчейн
+ */
+export const loadLastSubmitted = (): LastSubmitted | null => {
+  try {
+    const stored = localStorage.getItem(LAST_SUBMITTED_KEY);
+    if (stored) {
+      return JSON.parse(stored) as LastSubmitted;
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки последней отправки:', error);
+  }
+  return null;
+};
+
+/**
+ * Очистить информацию о последней отправке (при сбросе статистики)
+ */
+export const clearLastSubmitted = (): void => {
+  try {
+    localStorage.removeItem(LAST_SUBMITTED_KEY);
+  } catch (error) {
+    console.error('Ошибка очистки последней отправки:', error);
   }
 };

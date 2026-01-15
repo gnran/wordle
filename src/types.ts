@@ -37,3 +37,12 @@ export interface UserInfo {
   pfpUrl?: string;
   walletAddress?: string;
 }
+
+export interface LastSubmitted {
+  games: number;
+  wins: number;
+  losses: number;
+  nonce: number;
+  txHash?: string;
+  timestamp?: number;
+}

@@ -1,5 +1,9 @@
+import { useState } from 'react';
 import { UserStats, UserInfo } from '../types';
 import { formatWalletAddress } from '../utils/format';
+import { submitStatsOnchain } from '../utils/contract';
+import { sdk } from '@farcaster/miniapp-sdk';
+import { BrowserProvider } from 'ethers';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -13,7 +17,49 @@ interface ProfileModalProps {
  * Модальное окно профиля со статистикой
  */
 export const ProfileModal = ({ isOpen, onClose, stats, onResetStats, userInfo }: ProfileModalProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+
   if (!isOpen) return null;
+
+  const handleSubmitStats = async () => {
+    if (!userInfo?.walletAddress) {
+      setSubmitError('Кошелек не подключен. Пожалуйста, подключите кошелек через Farcaster.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+    setSubmitSuccess(null);
+
+    try {
+      const provider = await sdk.wallet.getEthereumProvider();
+      if (!provider) {
+        setSubmitError('Не удалось получить провайдер кошелька');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const browserProvider = new BrowserProvider(provider);
+      const result = await submitStatsOnchain(stats, userInfo.walletAddress, browserProvider);
+
+      if (result.success) {
+        setSubmitSuccess(`Статистика успешно отправлена! Транзакция: ${result.txHash?.slice(0, 10)}...`);
+        // Очищаем ошибку через 5 секунд
+        setTimeout(() => {
+          setSubmitSuccess(null);
+        }, 5000);
+      } else {
+        setSubmitError(result.error || 'Неизвестная ошибка');
+      }
+    } catch (error: any) {
+      console.error('Ошибка отправки статистики:', error);
+      setSubmitError(error.message || 'Произошла ошибка при отправке статистики');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div
@@ -117,6 +163,69 @@ export const ProfileModal = ({ isOpen, onClose, stats, onResetStats, userInfo }:
             </div>
           </div>
         </div>
+
+        {/* Кнопка отправки статистики в блокчейн */}
+        {userInfo?.walletAddress && (
+          <div className="mb-4">
+            <button
+              onClick={handleSubmitStats}
+              disabled={isSubmitting || stats.totalGames === 0}
+              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded transition-colors flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  <span>Отправка...</span>
+                </>
+              ) : (
+                <span>Submit stats onchain</span>
+              )}
+            </button>
+
+            {submitError && (
+              <div className="mt-2 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-2 rounded text-sm">
+                {submitError}
+              </div>
+            )}
+
+            {submitSuccess && (
+              <div className="mt-2 bg-green-100 dark:bg-green-900 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-300 px-4 py-2 rounded text-sm">
+                {submitSuccess}
+              </div>
+            )}
+
+            {stats.totalGames === 0 && (
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
+                Сыграйте хотя бы одну игру, чтобы отправить статистику
+              </p>
+            )}
+          </div>
+        )}
+
+        {!userInfo?.walletAddress && (
+          <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 rounded text-sm">
+            Для отправки статистики в блокчейн необходимо подключить кошелек через Farcaster
+          </div>
+        )}
 
         <div className="flex gap-3">
           <button
