@@ -8,6 +8,10 @@ import { GameBoard } from './components/GameBoard';
 import { Keyboard } from './components/Keyboard';
 import { StatsModal } from './components/StatsModal';
 import { GameOverModal } from './components/GameOverModal';
+import { Navigation } from './components/Navigation';
+import { LeaderboardModal } from './components/LeaderboardModal';
+import { FAQModal } from './components/FAQModal';
+import { ProfileModal } from './components/ProfileModal';
 
 
 const MAX_ATTEMPTS = 6;
@@ -37,11 +41,32 @@ function App() {
   const [showStats, setShowStats] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('wordle-theme');
+    if (saved) {
+      return saved === 'dark';
+    }
+    return true; // По умолчанию темная тема
+  });
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showFAQ, setShowFAQ] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   // Уведомляем SDK о готовности приложения
   useEffect(() => {
     sdk.actions.ready();
   }, []);
+
+  // Применяем тему при загрузке и изменении
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('wordle-theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('wordle-theme', 'light');
+    }
+  }, [isDarkMode]);
   
   // Сохраняем состояние игры при изменении
   useEffect(() => {
@@ -276,57 +301,73 @@ function App() {
   const displayRows = getDisplayRows();
   const letterStates = getLetterStates();
 
+  const handleThemeToggle = () => {
+    setIsDarkMode(prev => !prev);
+  };
+
+  const handleHomeClick = () => {
+    // Прокрутка наверх или обновление страницы
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col items-center py-2 sm:py-8 px-4">
-      <header className="w-full max-w-2xl mb-3 sm:mb-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl sm:text-4xl font-bold text-center flex-1">
-            WORDLE
-          </h1>
-          <button
-            onClick={() => setShowStats(true)}
-            className="text-xl sm:text-2xl hover:scale-110 transition-transform"
-            title="Статистика"
-          >
-            📊
-          </button>
-        </div>
-      </header>
-
-      {errorMessage && (
-        <div className="bg-red-600 text-white px-4 py-2 rounded mb-4 animate-pulse">
-          {errorMessage}
-        </div>
-      )}
-
-      <GameBoard
-        rows={displayRows}
-        currentRow={gameState.currentRow}
-        currentGuess={gameState.currentGuess}
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
+      <Navigation
+        onHomeClick={handleHomeClick}
+        onLeaderboardClick={() => setShowLeaderboard(true)}
+        onFAQClick={() => setShowFAQ(true)}
+        onProfileClick={() => setShowProfile(true)}
+        isDarkMode={isDarkMode}
+        onThemeToggle={handleThemeToggle}
       />
 
-      <div className="w-full max-w-2xl mt-2 sm:mt-4">
-        <Keyboard
-          onKeyPress={handleKeyPress}
-          onDelete={handleDelete}
-          letterStates={letterStates}
-        />
-        
-        <div className="flex gap-2 justify-center mt-2 sm:mt-4 px-2">
-          <button
-            onClick={handleEnter}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm sm:text-base"
-          >
-            ENTER
-          </button>
-          <button
-            onClick={handleNewGame}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm sm:text-base"
-          >
-            New Game
-          </button>
+      <main className="flex-1 flex flex-col items-center justify-center py-4 sm:py-8 px-4">
+        <div className="w-full max-w-2xl">
+          <header className="text-center mb-6 sm:mb-8">
+            <h1 className="text-3xl sm:text-5xl font-bold text-blue-500 dark:text-blue-400 mb-2">
+              WORDLY
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              Угадай слово за 6 попыток
+            </p>
+          </header>
+
+          {errorMessage && (
+            <div className="bg-red-600 text-white px-4 py-2 rounded mb-4 animate-pulse text-center">
+              {errorMessage}
+            </div>
+          )}
+
+          <GameBoard
+            rows={displayRows}
+            currentRow={gameState.currentRow}
+            currentGuess={gameState.currentGuess}
+          />
+
+          <div className="w-full mt-4 sm:mt-6">
+            <Keyboard
+              onKeyPress={handleKeyPress}
+              onDelete={handleDelete}
+              letterStates={letterStates}
+            />
+            
+            <div className="flex gap-2 justify-center mt-4 sm:mt-6 px-2">
+              <button
+                onClick={handleEnter}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm sm:text-base"
+              >
+                ENTER
+              </button>
+              <button
+                onClick={handleNewGame}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm sm:text-base"
+              >
+                New Game
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
 
       <StatsModal
         stats={stats}
@@ -342,6 +383,23 @@ function App() {
         attempts={gameState.guesses.length}
         onClose={() => setShowGameOver(false)}
         onNewGame={handleNewGame}
+      />
+
+      <LeaderboardModal
+        isOpen={showLeaderboard}
+        onClose={() => setShowLeaderboard(false)}
+      />
+
+      <FAQModal
+        isOpen={showFAQ}
+        onClose={() => setShowFAQ(false)}
+      />
+
+      <ProfileModal
+        isOpen={showProfile}
+        onClose={() => setShowProfile(false)}
+        stats={stats}
+        onResetStats={handleResetStats}
       />
     </div>
   );

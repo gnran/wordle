@@ -30,10 +30,10 @@ export const GameBoard = ({ rows, currentRow, currentGuess }: GameBoardProps) =>
                   border-2 rounded
                   transition-all duration-300
                   ${isEmpty && !showLetter 
-                    ? 'bg-gray-800 border-gray-600' 
+                    ? 'bg-gray-200 dark:bg-gray-800 border-gray-300 dark:border-gray-600' 
                     : getLetterColor(letter.state)
                   }
-                  ${letter.state !== 'empty' ? 'border-transparent text-white' : 'text-gray-300'}
+                  ${letter.state !== 'empty' ? 'border-transparent text-white' : 'text-gray-700 dark:text-gray-300'}
                 `}
               >
                 {showLetter ? letter.value : ''}

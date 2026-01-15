@@ -54,12 +54,12 @@ export const wordToLetters = (word: string, states: LetterState[]): Letter[] => 
 export const getLetterColor = (state: LetterState): string => {
   switch (state) {
     case 'correct':
-      return 'bg-green-600';
+      return 'bg-green-600 dark:bg-green-600';
     case 'present':
-      return 'bg-yellow-500';
+      return 'bg-yellow-500 dark:bg-yellow-500';
     case 'absent':
-      return 'bg-gray-600';
+      return 'bg-gray-400 dark:bg-gray-600';
     default:
-      return 'bg-gray-800 border-gray-600';
+      return 'bg-gray-200 dark:bg-gray-800 border-gray-300 dark:border-gray-600';
   }
 };

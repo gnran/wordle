@@ -26,20 +26,20 @@ export const GameOverModal = ({
       onClick={onClose}
     >
       <div
-        className="bg-gray-800 rounded-lg p-6 sm:p-8 max-w-md w-full text-center"
+        className="bg-white dark:bg-gray-800 rounded-lg p-6 sm:p-8 max-w-md w-full text-center"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-3xl font-bold mb-4">
+        <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">
           {won ? '🎉 Поздравляем!' : '😔 Игра окончена'}
         </h2>
         
         {won ? (
-          <p className="text-lg mb-2">
+          <p className="text-lg mb-2 text-gray-700 dark:text-gray-300">
             Вы угадали слово за {attempts} {attempts === 1 ? 'попытку' : attempts < 5 ? 'попытки' : 'попыток'}!
           </p>
         ) : (
-          <p className="text-lg mb-2">
-            Загаданное слово было: <span className="font-bold text-green-400">{targetWord}</span>
+          <p className="text-lg mb-2 text-gray-700 dark:text-gray-300">
+            Загаданное слово было: <span className="font-bold text-green-600 dark:text-green-400">{targetWord}</span>
           </p>
         )}
 

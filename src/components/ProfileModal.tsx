@@ -1,16 +1,16 @@
 import { UserStats } from '../types';
 
-interface StatsModalProps {
-  stats: UserStats;
+interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onReset: () => void;
+  stats: UserStats;
+  onResetStats: () => void;
 }
 
 /**
- * Модальное окно с личным кабинетом и статистикой пользователя
+ * Модальное окно профиля со статистикой
  */
-export const StatsModal = ({ stats, isOpen, onClose, onReset }: StatsModalProps) => {
+export const ProfileModal = ({ isOpen, onClose, stats, onResetStats }: ProfileModalProps) => {
   if (!isOpen) return null;
 
   return (
@@ -23,7 +23,7 @@ export const StatsModal = ({ stats, isOpen, onClose, onReset }: StatsModalProps)
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Личный кабинет</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Профиль</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-2xl"
@@ -72,7 +72,7 @@ export const StatsModal = ({ stats, isOpen, onClose, onReset }: StatsModalProps)
 
         <div className="flex gap-3">
           <button
-            onClick={onReset}
+            onClick={onResetStats}
             className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition-colors"
           >
             Сбросить статистику

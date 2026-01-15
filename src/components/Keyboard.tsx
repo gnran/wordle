@@ -18,7 +18,7 @@ export const Keyboard = ({ onKeyPress, onDelete, letterStates }: KeyboardProps) 
   const getKeyColor = (key: string): string => {
     const state = letterStates[key];
     if (!state || state === 'empty') {
-      return 'bg-gray-700 hover:bg-gray-600';
+      return 'bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600';
     }
     return getLetterColor(state);
   };
@@ -26,14 +26,14 @@ export const Keyboard = ({ onKeyPress, onDelete, letterStates }: KeyboardProps) 
   const KeyButton = ({ letter, onClick }: { letter: string; onClick: () => void }) => (
     <button
       onClick={onClick}
-      className={`
+        className={`
         ${getKeyColor(letter)}
         px-2 py-1.5 sm:px-3 sm:py-3 md:px-4 md:py-4
         text-xs sm:text-sm md:text-base font-semibold
         rounded
         transition-colors
         active:scale-95
-        ${letterStates[letter] && letterStates[letter] !== 'empty' ? 'text-white' : 'text-gray-200'}
+        ${letterStates[letter] && letterStates[letter] !== 'empty' ? 'text-white' : 'text-gray-800 dark:text-gray-200'}
       `}
     >
       {letter}
@@ -58,7 +58,7 @@ export const Keyboard = ({ onKeyPress, onDelete, letterStates }: KeyboardProps) 
         ))}
         <button
           onClick={onDelete}
-          className="bg-gray-700 hover:bg-gray-600 px-2 py-1.5 sm:px-4 sm:py-3 md:px-6 md:py-4 text-xs sm:text-sm md:text-base font-semibold rounded transition-colors active:scale-95 text-gray-200"
+          className="bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 px-2 py-1.5 sm:px-4 sm:py-3 md:px-6 md:py-4 text-xs sm:text-sm md:text-base font-semibold rounded transition-colors active:scale-95 text-gray-800 dark:text-gray-200"
         >
           ⌫
         </button>

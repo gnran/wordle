@@ -9,8 +9,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #121213;
-  color: #ffffff;
+  @apply bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 #root {
