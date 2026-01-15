@@ -204,7 +204,26 @@ export async function submitStatsOnchain(
     }
 
     // Загружаем последнюю отправленную статистику
-    const lastSubmitted = loadLastSubmitted();
+    let lastSubmitted = loadLastSubmitted();
+
+    // Получаем текущий nonce из контракта
+    const currentNonce = await getCurrentNonce(walletAddress, provider);
+
+    // Если lastSubmitted отсутствует, но в контракте уже есть данные (nonce > 0),
+    // нужно синхронизировать: получить статистику из контракта
+    if (!lastSubmitted && currentNonce > 0) {
+      const onchainStats = await getOnchainStats(walletAddress, provider);
+      if (onchainStats) {
+        // Синхронизируем lastSubmitted с данными из контракта
+        lastSubmitted = {
+          games: onchainStats.totalGames,
+          wins: onchainStats.wins,
+          losses: onchainStats.losses,
+          nonce: onchainStats.nonce,
+        };
+        saveLastSubmitted(lastSubmitted);
+      }
+    }
 
     // Вычисляем дельту
     const { deltaWins, deltaLosses, expectedNonce } = calculateDelta(
@@ -218,9 +237,15 @@ export async function submitStatsOnchain(
       return { success: false, error: validation.error };
     }
 
-    // Получаем текущий nonce из контракта для проверки
-    const currentNonce = await getCurrentNonce(walletAddress, provider);
+    // Проверяем соответствие nonce
     if (currentNonce !== expectedNonce) {
+      // Если nonce не совпадает, но есть данные в контракте, предлагаем синхронизацию
+      if (currentNonce > 0 && !lastSubmitted) {
+        return {
+          success: false,
+          error: `Обнаружена статистика в блокчейне. Обновите страницу для синхронизации.`,
+        };
+      }
       return {
         success: false,
         error: `Несоответствие nonce. Ожидается ${expectedNonce}, получено ${currentNonce}. Обновите страницу и попробуйте снова.`,
