@@ -29,9 +29,9 @@ const LetterBlock = ({
   return (
     <div
       className={`
-        w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14
+        w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12
         flex items-center justify-center
-        text-lg sm:text-xl font-bold
+        text-base sm:text-lg font-bold
         border-2 rounded
         ${getColorClass()}
         ${state !== 'empty' ? 'border-transparent' : ''}
@@ -68,9 +68,9 @@ const LetterBlockSmall = ({
   return (
     <div
       className={`
-        w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7
+        w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6
         flex items-center justify-center
-        text-xs sm:text-sm font-bold
+        text-[10px] sm:text-xs font-bold
         border-2 rounded
         ${getColorClass()}
         ${state !== 'empty' ? 'border-transparent' : ''}
@@ -92,7 +92,7 @@ const WordExample = ({
   states: Array<'correct' | 'present' | 'absent' | 'empty'> 
 }) => {
   return (
-    <div className="flex gap-2 justify-center my-4">
+    <div className="flex gap-1.5 sm:gap-2 justify-center my-2 sm:my-3">
       {word.split('').map((letter, index) => (
         <LetterBlock key={index} letter={letter} state={states[index]} />
       ))}
@@ -116,14 +116,14 @@ export const FAQModal = ({ isOpen, onClose }: FAQModalProps) => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gray-100 dark:bg-gray-800 px-6 py-4 rounded-t-lg">
+        <div className="bg-gray-100 dark:bg-gray-800 px-3 sm:px-4 py-2 sm:py-3 rounded-t-lg">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center flex-1">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white text-center flex-1">
               How to play
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-2xl ml-4"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl sm:text-2xl ml-2 sm:ml-4"
             >
               ×
             </button>
@@ -131,16 +131,16 @@ export const FAQModal = ({ isOpen, onClose }: FAQModalProps) => {
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto px-6 py-6 flex-1">
-          <div className="space-y-6">
+        <div className="overflow-y-auto px-3 sm:px-4 py-3 sm:py-4 flex-1">
+          <div className="space-y-3 sm:space-y-4">
             {/* Introduction */}
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base">
               You have to guess the hidden word in 6 tries and the color of the letters changes to show how close you are.
             </p>
 
             {/* First Example */}
             <div>
-              <p className="text-gray-700 dark:text-gray-300 mb-3">
+              <p className="text-gray-700 dark:text-gray-300 mb-2 text-sm sm:text-base">
                 To start the game, just enter any word, for example:
               </p>
               <WordExample 
@@ -149,31 +149,31 @@ export const FAQModal = ({ isOpen, onClose }: FAQModalProps) => {
               />
               
               {/* Legend */}
-              <div className="mt-4 p-4 border-2 border-gray-300 dark:border-gray-600 rounded bg-gray-100 dark:bg-gray-800">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1 items-center">
+              <div className="mt-2 sm:mt-3 p-2 sm:p-3 border-2 border-gray-300 dark:border-gray-600 rounded bg-gray-100 dark:bg-gray-800">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <div className="flex gap-0.5 sm:gap-1 items-center">
                       <LetterBlockSmall letter="T" state="absent" />
-                      <span className="text-gray-700 dark:text-gray-300">,</span>
+                      <span className="text-gray-700 dark:text-gray-300 text-xs">,</span>
                       <LetterBlockSmall letter="B" state="absent" />
                     </div>
-                    <span className="text-gray-700 dark:text-gray-300 text-sm">
+                    <span className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm">
                       aren't in the target word at all.
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1 items-center">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <div className="flex gap-0.5 sm:gap-1 items-center">
                       <LetterBlockSmall letter="A" state="present" />
-                      <span className="text-gray-700 dark:text-gray-300">,</span>
+                      <span className="text-gray-700 dark:text-gray-300 text-xs">,</span>
                       <LetterBlockSmall letter="L" state="present" />
                     </div>
-                    <span className="text-gray-700 dark:text-gray-300 text-sm">
+                    <span className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm">
                       is in the word but in the wrong spot.
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     <LetterBlockSmall letter="E" state="correct" />
-                    <span className="text-gray-700 dark:text-gray-300 text-sm">
+                    <span className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm">
                       is in the word and in the correct spot.
                     </span>
                   </div>
@@ -183,21 +183,21 @@ export const FAQModal = ({ isOpen, onClose }: FAQModalProps) => {
 
             {/* Second Example */}
             <div>
-              <p className="text-gray-700 dark:text-gray-300 mb-3">
+              <p className="text-gray-700 dark:text-gray-300 mb-2 text-sm sm:text-base">
                 Another try to find matching letters in the target word.
               </p>
               <WordExample 
                 word="UNCLE" 
                 states={['absent', 'correct', 'absent', 'correct', 'correct']} 
               />
-              <p className="text-center text-gray-700 dark:text-gray-300 font-semibold my-2">
+              <p className="text-center text-gray-700 dark:text-gray-300 font-semibold my-1 sm:my-2 text-sm sm:text-base">
                 So close!
               </p>
               <WordExample 
                 word="ANGLE" 
                 states={['correct', 'correct', 'correct', 'correct', 'correct']} 
               />
-              <p className="text-center text-gray-700 dark:text-gray-300 font-semibold my-2">
+              <p className="text-center text-gray-700 dark:text-gray-300 font-semibold my-1 sm:my-2 text-sm sm:text-base">
                 Got it! 🏆
               </p>
             </div>
@@ -205,10 +205,10 @@ export const FAQModal = ({ isOpen, onClose }: FAQModalProps) => {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="px-3 sm:px-4 py-2 sm:py-3 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={onClose}
-            className="w-full bg-blue-800 hover:bg-blue-700 text-gray-200 font-semibold py-2 px-4 rounded transition-colors"
+            className="w-full bg-blue-800 hover:bg-blue-700 text-gray-200 font-semibold py-1.5 sm:py-2 px-4 rounded transition-colors text-sm sm:text-base"
           >
             Close
           </button>
