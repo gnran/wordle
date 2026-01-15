@@ -111,14 +111,14 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-[#0f1419] rounded-lg p-6 sm:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-[#0f1419] rounded-lg p-3 sm:p-6 md:p-8 max-w-md w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Profile</h2>
+        <div className="flex justify-between items-center mb-3 sm:mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Profile</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-2xl"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl sm:text-2xl"
           >
             ×
           </button>
@@ -126,42 +126,42 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
 
         {/* User information */}
         {userInfo && (
-          <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-4 mb-4">
+          <div className="mb-3 sm:mb-6 pb-3 sm:pb-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2 sm:gap-4 mb-2 sm:mb-4">
               {userInfo.pfpUrl ? (
                 <img
                   src={userInfo.pfpUrl}
                   alt={userInfo.username || userInfo.displayName || 'User'}
-                  className="w-16 h-16 rounded-full object-cover border-2 border-blue-500 dark:border-blue-400"
+                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-blue-500 dark:border-blue-400"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white text-2xl font-bold border-2 border-blue-500 dark:border-blue-400">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white text-xl sm:text-2xl font-bold border-2 border-blue-500 dark:border-blue-400">
                   {(userInfo.username || userInfo.displayName || 'U')[0].toUpperCase()}
                 </div>
               )}
               <div className="flex-1">
-                <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                <div className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                   {userInfo.displayName || userInfo.username || 'User'}
                 </div>
                 {userInfo.username && userInfo.username !== userInfo.displayName && (
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     @{userInfo.username}
                   </div>
                 )}
               </div>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">FID:</span>
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">FID:</span>
+                <span className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
                   {userInfo.fid}
                 </span>
               </div>
               {userInfo.walletAddress && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Wallet:</span>
-                  <span className="text-sm font-mono font-semibold text-gray-900 dark:text-white">
+                  <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Wallet:</span>
+                  <span className="text-xs sm:text-sm font-mono font-semibold text-gray-900 dark:text-white">
                     {formatWalletAddress(userInfo.walletAddress)}
                   </span>
                 </div>
@@ -171,36 +171,36 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
         )}
 
         {/* Statistics in card style */}
-        <div className="mb-6">
-          <div className="text-xs text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-1">LIFETIME</div>
-          <h3 className="text-xl font-bold text-white mb-4">All-time performance</h3>
+        <div className="mb-3 sm:mb-6">
+          <div className="text-xs text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-0.5 sm:mb-1">LIFETIME</div>
+          <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-4">All-time performance</h3>
           
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             {/* Total games - dark purple-blue */}
-            <div className="bg-[#2a1f3d] dark:bg-[#2a1f3d] rounded-lg p-4">
-              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">TOTAL GAMES</div>
-              <div className="text-3xl font-bold text-white mb-1">{stats.totalGames}</div>
+            <div className="bg-[#2a1f3d] dark:bg-[#2a1f3d] rounded-lg p-2 sm:p-4">
+              <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">TOTAL GAMES</div>
+              <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{stats.totalGames}</div>
               <div className="text-gray-400 text-xs">All puzzles played</div>
             </div>
 
             {/* Wins - dark teal-green */}
-            <div className="bg-[#1a2f2a] dark:bg-[#1a2f2a] rounded-lg p-4">
-              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">WINS</div>
-              <div className="text-3xl font-bold text-white mb-1">{stats.wins}</div>
+            <div className="bg-[#1a2f2a] dark:bg-[#1a2f2a] rounded-lg p-2 sm:p-4">
+              <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">WINS</div>
+              <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{stats.wins}</div>
               <div className="text-gray-400 text-xs">Games won</div>
             </div>
 
             {/* Losses - dark purple-blue */}
-            <div className="bg-[#2a1f3d] dark:bg-[#2a1f3d] rounded-lg p-4">
-              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">LOSSES</div>
-              <div className="text-3xl font-bold text-white mb-1">{stats.losses}</div>
+            <div className="bg-[#2a1f3d] dark:bg-[#2a1f3d] rounded-lg p-2 sm:p-4">
+              <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">LOSSES</div>
+              <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{stats.losses}</div>
               <div className="text-gray-400 text-xs">Games lost</div>
             </div>
 
             {/* Win percentage - dark teal-green */}
-            <div className="bg-[#1a2f2a] dark:bg-[#1a2f2a] rounded-lg p-4">
-              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">WIN PERCENTAGE</div>
-              <div className="text-3xl font-bold text-white mb-1">
+            <div className="bg-[#1a2f2a] dark:bg-[#1a2f2a] rounded-lg p-2 sm:p-4">
+              <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">WIN PERCENTAGE</div>
+              <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">
                 {stats.winPercentage > 0 ? `${stats.winPercentage.toFixed(1)}%` : '0%'}
               </div>
               <div className="text-gray-400 text-xs">Success rate</div>
@@ -210,11 +210,11 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
 
         {/* Blockchain stats submission button */}
         {userInfo?.walletAddress && (
-          <div className="mb-4">
+          <div className="mb-2 sm:mb-4">
             <button
               onClick={handleSubmitStats}
               disabled={isSubmitting || stats.totalGames === 0}
-              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded transition-colors flex items-center justify-center gap-2"
+              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 sm:py-2 px-3 sm:px-4 rounded transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               {isSubmitting ? (
                 <>
@@ -266,7 +266,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
         )}
 
         {!userInfo?.walletAddress && (
-          <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 rounded text-sm">
+          <div className="mb-2 sm:mb-4 p-2 sm:p-3 bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 rounded text-xs sm:text-sm">
             To submit statistics to blockchain, please connect a wallet through Farcaster
           </div>
         )}
@@ -274,7 +274,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
         <div className="flex justify-center">
           <button
             onClick={onClose}
-            className="bg-blue-800 hover:bg-blue-700 text-gray-200 font-semibold py-2 px-6 rounded transition-colors"
+            className="bg-blue-800 hover:bg-blue-700 text-gray-200 font-semibold py-1.5 sm:py-2 px-4 sm:px-6 rounded transition-colors text-sm sm:text-base"
           >
             Close
           </button>
