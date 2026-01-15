@@ -8,7 +8,7 @@
       "version": "1",
       "name": "Wordle",
       "homeUrl": "https://wordle-six-orcin.vercel.app/",
-      "iconUrl": "https://wordle-six-orcin.vercel.app/icon.png",
+      "iconUrl": "https://wordle-six-orcin.vercel.app/favicon.png",
       "splashImageUrl": "https://wordle-six-orcin.vercel.app/favicon.png",
       "splashBackgroundColor": "#000000",
       "webhookUrl": "",
