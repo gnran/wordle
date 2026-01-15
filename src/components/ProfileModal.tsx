@@ -214,7 +214,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
             <button
               onClick={handleSubmitStats}
               disabled={isSubmitting || stats.totalGames === 0}
-              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 sm:py-2 px-3 sm:px-4 rounded transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
+              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-1.5 sm:py-2 px-3 sm:px-4 rounded transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               {isSubmitting ? (
                 <>
