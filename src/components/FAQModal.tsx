@@ -16,11 +16,11 @@ const LetterBlock = ({
   const getColorClass = () => {
     switch (state) {
       case 'correct':
-        return 'bg-green-600 dark:bg-green-600 text-white';
+        return 'bg-green-500 dark:bg-green-600 text-white';
       case 'present':
-        return 'bg-yellow-500 dark:bg-yellow-500 text-white';
+        return 'bg-yellow-400 dark:bg-yellow-500 text-white';
       case 'absent':
-        return 'bg-gray-400 dark:bg-gray-600 text-white';
+        return 'bg-gray-500 dark:bg-gray-600 text-white';
       default:
         return 'bg-gray-200 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300';
     }
@@ -55,11 +55,11 @@ const LetterBlockSmall = ({
   const getColorClass = () => {
     switch (state) {
       case 'correct':
-        return 'bg-green-600 dark:bg-green-600 text-white';
+        return 'bg-green-500 dark:bg-green-600 text-white';
       case 'present':
-        return 'bg-yellow-500 dark:bg-yellow-500 text-white';
+        return 'bg-yellow-400 dark:bg-yellow-500 text-white';
       case 'absent':
-        return 'bg-gray-400 dark:bg-gray-600 text-white';
+        return 'bg-gray-500 dark:bg-gray-600 text-white';
       default:
         return 'bg-gray-200 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300';
     }
@@ -149,7 +149,7 @@ export const FAQModal = ({ isOpen, onClose }: FAQModalProps) => {
               />
               
               {/* Legend */}
-              <div className="mt-2 sm:mt-3 p-2 sm:p-3 border-2 border-gray-300 dark:border-gray-600 rounded bg-gray-100 dark:bg-gray-800">
+              <div className="mt-2 sm:mt-3 p-2 sm:p-3 border-2 border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800">
                 <div className="space-y-1.5 sm:space-y-2">
                   <div className="flex items-center gap-1.5 sm:gap-2">
                     <div className="flex gap-0.5 sm:gap-1 items-center">
