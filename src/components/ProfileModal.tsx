@@ -10,14 +10,13 @@ interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   stats: UserStats;
-  onResetStats: () => void;
   userInfo: UserInfo | null;
 }
 
 /**
  * Модальное окно профиля со статистикой
  */
-export const ProfileModal = ({ isOpen, onClose, stats, onResetStats, userInfo }: ProfileModalProps) => {
+export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | React.ReactNode | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | React.ReactNode | null>(null);
@@ -112,7 +111,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, onResetStats, userInfo }:
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-800 rounded-lg p-6 sm:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-[#0f1419] rounded-lg p-6 sm:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
@@ -171,40 +170,40 @@ export const ProfileModal = ({ isOpen, onClose, stats, onResetStats, userInfo }:
           </div>
         )}
 
-        <div className="space-y-4 mb-6">
-          <div className="bg-gray-100 dark:bg-gray-700 rounded p-4">
-            <div className="text-gray-600 dark:text-gray-400 text-sm mb-1">Всего игр</div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalGames}</div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-100 dark:bg-gray-700 rounded p-4">
-              <div className="text-gray-600 dark:text-gray-400 text-sm mb-1">Побед</div>
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.wins}</div>
+        {/* Статистика в стиле карточек */}
+        <div className="mb-6">
+          <div className="text-xs text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-1">LIFETIME</div>
+          <h3 className="text-xl font-bold text-white mb-4">All-time performance</h3>
+          
+          <div className="grid grid-cols-2 gap-3">
+            {/* Всего игр - темно-фиолетовый-синий */}
+            <div className="bg-[#2a1f3d] dark:bg-[#2a1f3d] rounded-lg p-4">
+              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">Всего игр</div>
+              <div className="text-3xl font-bold text-white mb-1">{stats.totalGames}</div>
+              <div className="text-gray-400 text-xs">Всего сыграно</div>
             </div>
 
-            <div className="bg-gray-100 dark:bg-gray-700 rounded p-4">
-              <div className="text-gray-600 dark:text-gray-400 text-sm mb-1">Поражений</div>
-              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.losses}</div>
-            </div>
-          </div>
-
-          <div className="bg-gray-100 dark:bg-gray-700 rounded p-4">
-            <div className="text-gray-600 dark:text-gray-400 text-sm mb-1">Процент побед</div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-white">
-              {stats.winPercentage > 0 ? `${stats.winPercentage.toFixed(1)}%` : '0%'}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-100 dark:bg-gray-700 rounded p-4">
-              <div className="text-gray-600 dark:text-gray-400 text-sm mb-1">Текущая серия</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.currentStreak}</div>
+            {/* Победы - темно-бирюзовый-зеленый */}
+            <div className="bg-[#1a2f2a] dark:bg-[#1a2f2a] rounded-lg p-4">
+              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">Победы</div>
+              <div className="text-3xl font-bold text-white mb-1">{stats.wins}</div>
+              <div className="text-gray-400 text-xs">Выигранных игр</div>
             </div>
 
-            <div className="bg-gray-100 dark:bg-gray-700 rounded p-4">
-              <div className="text-gray-600 dark:text-gray-400 text-sm mb-1">Лучшая серия</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.maxStreak}</div>
+            {/* Поражения - темно-фиолетовый-синий */}
+            <div className="bg-[#2a1f3d] dark:bg-[#2a1f3d] rounded-lg p-4">
+              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">Поражения</div>
+              <div className="text-3xl font-bold text-white mb-1">{stats.losses}</div>
+              <div className="text-gray-400 text-xs">Проигранных игр</div>
+            </div>
+
+            {/* Процент побед - темно-бирюзовый-зеленый */}
+            <div className="bg-[#1a2f2a] dark:bg-[#1a2f2a] rounded-lg p-4">
+              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">Процент побед</div>
+              <div className="text-3xl font-bold text-white mb-1">
+                {stats.winPercentage > 0 ? `${stats.winPercentage.toFixed(1)}%` : '0%'}
+              </div>
+              <div className="text-gray-400 text-xs">Успешность</div>
             </div>
           </div>
         </div>
@@ -272,16 +271,10 @@ export const ProfileModal = ({ isOpen, onClose, stats, onResetStats, userInfo }:
           </div>
         )}
 
-        <div className="flex gap-3">
-          <button
-            onClick={onResetStats}
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition-colors"
-          >
-            Сбросить статистику
-          </button>
+        <div className="flex justify-center">
           <button
             onClick={onClose}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+            className="bg-blue-800 hover:bg-blue-700 text-gray-200 font-semibold py-2 px-6 rounded transition-colors"
           >
             Закрыть
           </button>

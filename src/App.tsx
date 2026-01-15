@@ -447,7 +447,6 @@ function App() {
         isOpen={showProfile}
         onClose={() => setShowProfile(false)}
         stats={stats}
-        onResetStats={handleResetStats}
         userInfo={userInfo}
       />
     </div>
