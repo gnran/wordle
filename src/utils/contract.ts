@@ -106,17 +106,17 @@ export async function checkNetwork(
 export async function switchToBaseNetwork(
   provider: BrowserProvider
 ): Promise<{ success: boolean; error?: string }> {
-  try {
-    const networkName = CONTRACT_CHAIN_ID === 8453 ? 'Base' : 'Base Sepolia';
-    const rpcUrl =
-      CONTRACT_CHAIN_ID === 8453
-        ? 'https://mainnet.base.org'
-        : 'https://sepolia.base.org';
-    const explorerUrl =
-      CONTRACT_CHAIN_ID === 8453
-        ? 'https://basescan.org'
-        : 'https://sepolia.basescan.org';
+  const networkName = CONTRACT_CHAIN_ID === 8453 ? 'Base' : 'Base Sepolia';
+  const rpcUrl =
+    CONTRACT_CHAIN_ID === 8453
+      ? 'https://mainnet.base.org'
+      : 'https://sepolia.base.org';
+  const explorerUrl =
+    CONTRACT_CHAIN_ID === 8453
+      ? 'https://basescan.org'
+      : 'https://sepolia.basescan.org';
 
+  try {
     await provider.send('wallet_switchEthereumChain', [
       { chainId: `0x${CONTRACT_CHAIN_ID.toString(16)}` },
     ]);
