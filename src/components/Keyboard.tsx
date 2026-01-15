@@ -3,7 +3,6 @@ import { getLetterColor } from '../utils/gameLogic';
 
 interface KeyboardProps {
   onKeyPress: (key: string) => void;
-  onEnter: () => void;
   onDelete: () => void;
   letterStates: Record<string, LetterState>;
 }
@@ -11,7 +10,7 @@ interface KeyboardProps {
 /**
  * Компонент виртуальной клавиатуры
  */
-export const Keyboard = ({ onKeyPress, onEnter, onDelete, letterStates }: KeyboardProps) => {
+export const Keyboard = ({ onKeyPress, onDelete, letterStates }: KeyboardProps) => {
   const firstRow = ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'];
   const secondRow = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'];
   const thirdRow = ['Z', 'X', 'C', 'V', 'B', 'N', 'M'];
@@ -29,8 +28,8 @@ export const Keyboard = ({ onKeyPress, onEnter, onDelete, letterStates }: Keyboa
       onClick={onClick}
       className={`
         ${getKeyColor(letter)}
-        px-3 py-3 sm:px-4 sm:py-4
-        text-sm sm:text-base font-semibold
+        px-2 py-1.5 sm:px-3 sm:py-3 md:px-4 md:py-4
+        text-xs sm:text-sm md:text-base font-semibold
         rounded
         transition-colors
         active:scale-95
@@ -59,17 +58,9 @@ export const Keyboard = ({ onKeyPress, onEnter, onDelete, letterStates }: Keyboa
         ))}
         <button
           onClick={onDelete}
-          className="bg-gray-700 hover:bg-gray-600 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base font-semibold rounded transition-colors active:scale-95 text-gray-200"
+          className="bg-gray-700 hover:bg-gray-600 px-2 py-1.5 sm:px-4 sm:py-3 md:px-6 md:py-4 text-xs sm:text-sm md:text-base font-semibold rounded transition-colors active:scale-95 text-gray-200"
         >
           ⌫
-        </button>
-      </div>
-      <div className="flex gap-1 justify-center">
-        <button
-          onClick={onEnter}
-          className="bg-blue-600 hover:bg-blue-700 px-8 py-3 sm:px-12 sm:py-4 text-sm sm:text-base font-semibold rounded transition-colors active:scale-95 text-white"
-        >
-          ENTER
         </button>
       </div>
     </div>

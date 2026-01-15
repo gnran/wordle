@@ -12,9 +12,9 @@ interface GameBoardProps {
  */
 export const GameBoard = ({ rows, currentRow, currentGuess }: GameBoardProps) => {
   return (
-    <div className="flex flex-col gap-2 mb-8">
+    <div className="flex flex-col gap-1 sm:gap-2 mb-4 sm:mb-8">
       {rows.map((row, rowIndex) => (
-        <div key={rowIndex} className="flex gap-2 justify-center">
+        <div key={rowIndex} className="flex gap-1 sm:gap-2 justify-center">
           {row.map((letter, letterIndex) => {
             const isCurrentRow = rowIndex === currentRow;
             const isEmpty = letter.state === 'empty';
@@ -24,9 +24,9 @@ export const GameBoard = ({ rows, currentRow, currentGuess }: GameBoardProps) =>
               <div
                 key={letterIndex}
                 className={`
-                  w-14 h-14 sm:w-16 sm:h-16
+                  w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16
                   flex items-center justify-center
-                  text-2xl font-bold
+                  text-lg sm:text-2xl font-bold
                   border-2 rounded
                   transition-all duration-300
                   ${isEmpty && !showLetter 

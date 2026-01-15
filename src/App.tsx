@@ -277,15 +277,15 @@ function App() {
   const letterStates = getLetterStates();
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col items-center py-8 px-4">
-      <header className="w-full max-w-2xl mb-6">
+    <div className="min-h-screen bg-gray-900 flex flex-col items-center py-2 sm:py-8 px-4">
+      <header className="w-full max-w-2xl mb-3 sm:mb-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-center flex-1">
+          <h1 className="text-2xl sm:text-4xl font-bold text-center flex-1">
             WORDLE
           </h1>
           <button
             onClick={() => setShowStats(true)}
-            className="text-2xl hover:scale-110 transition-transform"
+            className="text-xl sm:text-2xl hover:scale-110 transition-transform"
             title="Статистика"
           >
             📊
@@ -305,19 +305,28 @@ function App() {
         currentGuess={gameState.currentGuess}
       />
 
-      <Keyboard
-        onKeyPress={handleKeyPress}
-        onEnter={handleEnter}
-        onDelete={handleDelete}
-        letterStates={letterStates}
-      />
-
-      <button
-        onClick={handleNewGame}
-        className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded transition-colors"
-      >
-        Новая игра
-      </button>
+      <div className="w-full max-w-2xl mt-2 sm:mt-4">
+        <Keyboard
+          onKeyPress={handleKeyPress}
+          onDelete={handleDelete}
+          letterStates={letterStates}
+        />
+        
+        <div className="flex gap-2 justify-center mt-2 sm:mt-4 px-2">
+          <button
+            onClick={handleEnter}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm sm:text-base"
+          >
+            ENTER
+          </button>
+          <button
+            onClick={handleNewGame}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm sm:text-base"
+          >
+            New Game
+          </button>
+        </div>
+      </div>
 
       <StatsModal
         stats={stats}
