@@ -29,3 +29,11 @@ export interface StoredGameState {
   stats: UserStats;
   lastPlayedDate: string;
 }
+
+export interface UserInfo {
+  fid: number;
+  username?: string;
+  displayName?: string;
+  pfpUrl?: string;
+  walletAddress?: string;
+}

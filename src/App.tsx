@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
-import { GameState, UserStats, Letter, LetterState } from './types';
+import { GameState, UserStats, Letter, LetterState, UserInfo } from './types';
 import { getRandomWord, isValidWord } from './data/words';
 import { evaluateGuess, wordToLetters } from './utils/gameLogic';
 import { saveGameState, loadGameState, saveStats, loadStats, saveLastPlayedDate, resetStats, clearGameState } from './utils/storage';
@@ -51,10 +51,58 @@ function App() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   // Уведомляем SDK о готовности приложения
   useEffect(() => {
     sdk.actions.ready();
+  }, []);
+
+  // Получаем данные пользователя из Context API и Wallet
+  useEffect(() => {
+    async function fetchUserInfo() {
+      try {
+        const context = await sdk.context;
+        const user = context.user;
+        
+        let walletAddress: string | undefined;
+        try {
+          const provider = await sdk.wallet.getEthereumProvider();
+          if (provider) {
+            // Сначала пытаемся получить уже подключенные аккаунты (без запроса разрешения)
+            let accounts = await provider.request({ method: 'eth_accounts' });
+            
+            // Если аккаунтов нет, пытаемся запросить (может показать промпт пользователю)
+            if (!accounts || accounts.length === 0) {
+              try {
+                accounts = await provider.request({ method: 'eth_requestAccounts' });
+              } catch (requestError) {
+                // Пользователь может отклонить запрос - это нормально
+                console.log('Пользователь не предоставил доступ к кошельку');
+              }
+            }
+            
+            if (accounts && accounts.length > 0) {
+              walletAddress = accounts[0];
+            }
+          }
+        } catch (error) {
+          console.warn('Не удалось получить адрес кошелька:', error);
+        }
+
+        setUserInfo({
+          fid: user.fid,
+          username: user.username,
+          displayName: user.displayName,
+          pfpUrl: user.pfpUrl,
+          walletAddress
+        });
+      } catch (error) {
+        console.error('Ошибка получения данных пользователя:', error);
+      }
+    }
+
+    fetchUserInfo();
   }, []);
 
   // Применяем тему при загрузке и изменении
@@ -400,6 +448,7 @@ function App() {
         onClose={() => setShowProfile(false)}
         stats={stats}
         onResetStats={handleResetStats}
+        userInfo={userInfo}
       />
     </div>
   );

@@ -1,16 +1,18 @@
-import { UserStats } from '../types';
+import { UserStats, UserInfo } from '../types';
+import { formatWalletAddress } from '../utils/format';
 
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   stats: UserStats;
   onResetStats: () => void;
+  userInfo: UserInfo | null;
 }
 
 /**
  * Модальное окно профиля со статистикой
  */
-export const ProfileModal = ({ isOpen, onClose, stats, onResetStats }: ProfileModalProps) => {
+export const ProfileModal = ({ isOpen, onClose, stats, onResetStats, userInfo }: ProfileModalProps) => {
   if (!isOpen) return null;
 
   return (
@@ -19,7 +21,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, onResetStats }: ProfileMo
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-800 rounded-lg p-6 sm:p-8 max-w-md w-full"
+        className="bg-white dark:bg-gray-800 rounded-lg p-6 sm:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
@@ -31,6 +33,52 @@ export const ProfileModal = ({ isOpen, onClose, stats, onResetStats }: ProfileMo
             ×
           </button>
         </div>
+
+        {/* Информация о пользователе */}
+        {userInfo && (
+          <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-4 mb-4">
+              {userInfo.pfpUrl ? (
+                <img
+                  src={userInfo.pfpUrl}
+                  alt={userInfo.username || userInfo.displayName || 'User'}
+                  className="w-16 h-16 rounded-full object-cover border-2 border-blue-500 dark:border-blue-400"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white text-2xl font-bold border-2 border-blue-500 dark:border-blue-400">
+                  {(userInfo.username || userInfo.displayName || 'U')[0].toUpperCase()}
+                </div>
+              )}
+              <div className="flex-1">
+                <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {userInfo.displayName || userInfo.username || 'Пользователь'}
+                </div>
+                {userInfo.username && userInfo.username !== userInfo.displayName && (
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    @{userInfo.username}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">FID:</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {userInfo.fid}
+                </span>
+              </div>
+              {userInfo.walletAddress && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Кошелек:</span>
+                  <span className="text-sm font-mono font-semibold text-gray-900 dark:text-white">
+                    {formatWalletAddress(userInfo.walletAddress)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-4 mb-6">
           <div className="bg-gray-100 dark:bg-gray-700 rounded p-4">
