@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import React from 'react';
 import { UserStats, UserInfo } from '../types';
 import { formatWalletAddress } from '../utils/format';
 import { submitStatsOnchain } from '../utils/contract';
@@ -18,8 +19,8 @@ interface ProfileModalProps {
  */
 export const ProfileModal = ({ isOpen, onClose, stats, onResetStats, userInfo }: ProfileModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | React.ReactNode | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<string | React.ReactNode | null>(null);
 
   if (!isOpen) return null;
 
@@ -44,14 +45,46 @@ export const ProfileModal = ({ isOpen, onClose, stats, onResetStats, userInfo }:
       const browserProvider = new BrowserProvider(provider);
       const result = await submitStatsOnchain(stats, userInfo.walletAddress, browserProvider);
 
-      if (result.success) {
-        setSubmitSuccess(`Статистика успешно отправлена! Транзакция: ${result.txHash?.slice(0, 10)}...`);
-        // Очищаем ошибку через 5 секунд
+      if (result.success && result.txHash) {
+        const txHash = result.txHash;
+        const txLink = `https://basescan.org/tx/${txHash}`;
+        setSubmitSuccess(
+          <div>
+            <div>Статистика успешно отправлена!</div>
+            <a
+              href={txLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 dark:text-blue-400 underline text-sm mt-1 block"
+            >
+              Просмотреть транзакцию: {txHash.slice(0, 10)}...
+            </a>
+          </div>
+        );
+        // Очищаем сообщение через 10 секунд
         setTimeout(() => {
           setSubmitSuccess(null);
-        }, 5000);
+        }, 10000);
       } else {
-        setSubmitError(result.error || 'Неизвестная ошибка');
+        // Если есть txHash, но success = false, значит транзакция отправлена, но не подтверждена
+        if (result.txHash) {
+          const txLink = `https://basescan.org/tx/${result.txHash}`;
+          setSubmitError(
+            <div>
+              <div>{result.error || 'Транзакция отправлена, но не подтверждена'}</div>
+              <a
+                href={txLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 underline text-sm mt-1 block"
+              >
+                Проверить статус: {result.txHash.slice(0, 10)}...
+              </a>
+            </div>
+          );
+        } else {
+          setSubmitError(result.error || 'Неизвестная ошибка');
+        }
       }
     } catch (error: any) {
       console.error('Ошибка отправки статистики:', error);

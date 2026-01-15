@@ -265,18 +265,81 @@ export async function submitStatsOnchain(
       };
     }
 
+    // Логируем параметры для отладки
+    console.log('Отправка транзакции:', {
+      deltaWins,
+      deltaLosses,
+      expectedNonce,
+      contractAddress: CONTRACT_ADDRESS,
+    });
+
     // Отправляем транзакцию
     const tx = await contract.submitStatsSnapshot(
       deltaWins,
       deltaLosses,
-      expectedNonce
+      expectedNonce,
+      {
+        // Добавляем gas limit для надежности
+        gasLimit: 100000, // Достаточно для вызова функции
+      }
     );
 
-    // Ждем подтверждения
-    const receipt = await tx.wait();
+    // Сохраняем хеш транзакции сразу
+    const txHash = tx.hash;
+    if (!txHash) {
+      return {
+        success: false,
+        error: 'Не удалось получить хеш транзакции',
+      };
+    }
 
-    if (receipt && receipt.hash) {
-      // Обновляем lastSubmitted
+    // Ждем подтверждения (до 3 блоков для надежности)
+    let receipt;
+    try {
+      receipt = await tx.wait(3); // Ждем 3 подтверждения
+    } catch (waitError: any) {
+      // Если транзакция была отправлена, но произошла ошибка при ожидании,
+      // все равно сохраняем хеш, чтобы пользователь мог проверить транзакцию
+      console.error('Ошибка ожидания подтверждения:', waitError);
+      
+      // Проверяем, была ли транзакция выполнена (revert)
+      if (waitError.receipt) {
+        // Транзакция была включена в блок, но произошел revert
+        return {
+          success: false,
+          error: 'Транзакция отклонена контрактом. Проверьте транзакцию в блокчейне.',
+        };
+      }
+      
+      // Транзакция отправлена, но еще не подтверждена
+      // Сохраняем хеш, чтобы пользователь мог проверить статус позже
+      const newLastSubmitted: LastSubmitted = {
+        games: localStats.totalGames,
+        wins: localStats.wins,
+        losses: localStats.losses,
+        nonce: expectedNonce + 1,
+        txHash: txHash,
+        timestamp: Date.now(),
+      };
+      saveLastSubmitted(newLastSubmitted);
+
+      return {
+        success: false,
+        error: `Транзакция отправлена, но не подтверждена. Хеш: ${txHash.slice(0, 10)}... Проверьте статус позже.`,
+      };
+    }
+
+    // Проверяем статус транзакции
+    if (receipt && receipt.status === 1 && receipt.hash) {
+      // Транзакция успешно подтверждена
+      console.log('Транзакция успешно подтверждена:', receipt.hash);
+      
+      // Проверяем, что nonce действительно увеличился
+      const newNonce = await getCurrentNonce(walletAddress, provider);
+      if (newNonce !== expectedNonce + 1) {
+        console.warn('Nonce не увеличился после транзакции. Ожидалось:', expectedNonce + 1, 'Получено:', newNonce);
+      }
+
       const newLastSubmitted: LastSubmitted = {
         games: localStats.totalGames,
         wins: localStats.wins,
@@ -289,6 +352,21 @@ export async function submitStatsOnchain(
 
       return {
         success: true,
+        txHash: receipt.hash,
+      };
+    } else if (receipt && receipt.status === 0) {
+      // Транзакция была включена в блок, но произошел revert
+      console.error('Транзакция revert:', receipt);
+      
+      // Пытаемся получить причину revert из логов
+      let revertReason = 'Неизвестная причина';
+      if (receipt.logs && receipt.logs.length > 0) {
+        revertReason = 'Проверьте логи транзакции в блокчейне';
+      }
+      
+      return {
+        success: false,
+        error: `Транзакция отклонена контрактом (revert). ${revertReason}`,
         txHash: receipt.hash,
       };
     }
