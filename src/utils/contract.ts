@@ -231,6 +231,15 @@ export async function submitStatsOnchain(
     const signer = await provider.getSigner();
     const contract = await getContractWithSigner(signer);
 
+    // Проверяем, что контракт существует
+    const code = await provider.getCode(CONTRACT_ADDRESS);
+    if (code === '0x' || code === '0x0') {
+      return {
+        success: false,
+        error: 'Контракт не найден по указанному адресу. Проверьте конфигурацию.',
+      };
+    }
+
     // Отправляем транзакцию
     const tx = await contract.submitStatsSnapshot(
       deltaWins,
@@ -267,37 +276,77 @@ export async function submitStatsOnchain(
     console.error('Ошибка отправки статистики:', error);
 
     // Парсим распространенные ошибки
-    if (error.message?.includes('INVALID_NONCE')) {
+    const errorMessage = error?.message || error?.error?.message || String(error);
+    const errorCode = error?.code || error?.error?.code;
+
+    // Обработка ошибок от контракта
+    if (errorMessage?.includes('INVALID_NONCE')) {
       return {
         success: false,
         error: 'Неверный nonce. Обновите страницу и попробуйте снова.',
       };
     }
-    if (error.message?.includes('NOTHING_TO_SUBMIT')) {
+    if (errorMessage?.includes('NOTHING_TO_SUBMIT')) {
       return { success: false, error: 'Нечего отправлять' };
     }
-    if (error.message?.includes('BATCH_TOO_LARGE')) {
+    if (errorMessage?.includes('BATCH_TOO_LARGE')) {
       return {
         success: false,
         error: 'Слишком большой батч (максимум 200 игр)',
       };
     }
-    if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
+
+    // Обработка ошибок от кошелька
+    if (errorCode === 4001 || errorCode === 'ACTION_REJECTED' || errorMessage?.includes('User rejected')) {
       return {
         success: false,
         error: 'Транзакция отклонена пользователем',
       };
     }
-    if (error.code === -32603) {
+
+    // Обработка ошибок сети
+    if (errorCode === -32603 || errorMessage?.includes('network') || errorMessage?.includes('Network')) {
       return {
         success: false,
         error: 'Ошибка сети. Проверьте подключение и попробуйте снова.',
       };
     }
 
+    // Обработка ошибок недостатка газа
+    if (errorMessage?.includes('insufficient funds') || errorMessage?.includes('gas') || errorCode === -32000) {
+      return {
+        success: false,
+        error: 'Недостаточно средств для оплаты газа. Убедитесь, что на кошельке есть ETH.',
+      };
+    }
+
+    // Обработка ошибок контракта (revert)
+    if (errorMessage?.includes('revert') || errorMessage?.includes('execution reverted')) {
+      const revertReason = errorMessage.match(/revert\s+(.+)/i)?.[1] || '';
+      if (revertReason.includes('INVALID_NONCE')) {
+        return {
+          success: false,
+          error: 'Неверный nonce. Обновите страницу и попробуйте снова.',
+        };
+      }
+      return {
+        success: false,
+        error: `Ошибка контракта: ${revertReason || 'Транзакция отклонена контрактом'}`,
+      };
+    }
+
+    // Убираем адреса из сообщения об ошибке
+    let cleanError = errorMessage;
+    if (cleanError) {
+      // Удаляем адреса (0x...)
+      cleanError = cleanError.replace(/0x[a-fA-F0-9]{40}/g, '[адрес]');
+      // Удаляем длинные хеши
+      cleanError = cleanError.replace(/0x[a-fA-F0-9]{64}/g, '[хеш]');
+    }
+
     return {
       success: false,
-      error: error.message || 'Неизвестная ошибка',
+      error: cleanError || 'Произошла ошибка при отправке транзакции. Попробуйте снова.',
     };
   }
 }

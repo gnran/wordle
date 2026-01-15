@@ -55,7 +55,12 @@ export const ProfileModal = ({ isOpen, onClose, stats, onResetStats, userInfo }:
       }
     } catch (error: any) {
       console.error('Ошибка отправки статистики:', error);
-      setSubmitError(error.message || 'Произошла ошибка при отправке статистики');
+      const errorMessage = error?.message || error?.error?.message || String(error);
+      // Убираем адреса из сообщения об ошибке
+      const cleanError = errorMessage
+        .replace(/0x[a-fA-F0-9]{40}/g, '[адрес]')
+        .replace(/0x[a-fA-F0-9]{64}/g, '[хеш]');
+      setSubmitError(cleanError || 'Произошла ошибка при отправке статистики');
     } finally {
       setIsSubmitting(false);
     }
