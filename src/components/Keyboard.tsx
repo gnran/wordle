@@ -29,13 +29,15 @@ export const Keyboard = ({ onKeyPress, onDelete, onEnter, letterStates }: Keyboa
       onClick={onClick}
       className={`
         ${getKeyColor(letter)}
-        w-9 h-10 sm:w-10 sm:h-12
-        text-sm sm:text-base font-bold
+        min-w-[28px] h-8 px-1.5
+        sm:min-w-[36px] sm:h-10 sm:px-2
+        md:min-w-[40px] md:h-12 md:px-2.5
+        text-xs sm:text-sm md:text-base font-bold
         rounded-lg
         transition-colors
         active:scale-95
         flex items-center justify-center
-        flex-shrink-0
+        flex-1
         ${letterStates[letter] && letterStates[letter] !== 'empty' ? 'text-white' : 'text-gray-800 dark:text-gray-200'}
       `}
     >
@@ -44,26 +46,26 @@ export const Keyboard = ({ onKeyPress, onDelete, onEnter, letterStates }: Keyboa
   );
 
   return (
-    <div className="flex flex-col gap-2 mx-auto px-1 sm:px-2">
+    <div className="flex flex-col gap-1.5 sm:gap-2 mx-auto w-full max-w-full px-1 sm:px-2">
       {/* First row: 10 keys - defines the width */}
-      <div className="flex gap-1 justify-start w-[22rem] sm:w-[27.25rem] mx-auto">
+      <div className="flex gap-0.5 sm:gap-1 justify-start w-full max-w-full">
         {firstRow.map((key) => (
           <KeyButton key={key} letter={key} onClick={() => onKeyPress(key)} />
         ))}
       </div>
       
       {/* Second row: 9 keys - centered with equal padding on sides */}
-      <div className="flex gap-1 justify-center w-[22rem] sm:w-[27.25rem] mx-auto">
+      <div className="flex gap-0.5 sm:gap-1 justify-center w-full max-w-full">
         {secondRow.map((key) => (
           <KeyButton key={key} letter={key} onClick={() => onKeyPress(key)} />
         ))}
       </div>
       
       {/* Third row: Backspace + 7 letters + Enter - matches first row width */}
-      <div className="flex gap-1 justify-start w-[22rem] sm:w-[27.25rem] mx-auto">
+      <div className="flex gap-0.5 sm:gap-1 justify-start w-full max-w-full">
         <button
           onClick={onDelete}
-          className="bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 w-14 h-10 sm:w-16 sm:h-12 text-sm sm:text-base font-semibold rounded-lg transition-colors active:scale-95 text-gray-800 dark:text-gray-200 flex items-center justify-center flex-shrink-0"
+          className="bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 min-w-[42px] h-8 sm:min-w-[56px] sm:h-10 md:min-w-[64px] md:h-12 text-xs sm:text-sm md:text-base font-semibold rounded-lg transition-colors active:scale-95 text-gray-800 dark:text-gray-200 flex items-center justify-center flex-shrink-0 px-2 sm:px-3"
         >
           ⌫
         </button>
@@ -72,7 +74,7 @@ export const Keyboard = ({ onKeyPress, onDelete, onEnter, letterStates }: Keyboa
         ))}
         <button
           onClick={onEnter}
-          className="bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 w-14 h-10 sm:w-16 sm:h-12 text-sm sm:text-base font-semibold rounded-lg transition-colors active:scale-95 text-gray-800 dark:text-gray-200 flex items-center justify-center flex-shrink-0"
+          className="bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 min-w-[42px] h-8 sm:min-w-[56px] sm:h-10 md:min-w-[64px] md:h-12 text-xs sm:text-sm md:text-base font-semibold rounded-lg transition-colors active:scale-95 text-gray-800 dark:text-gray-200 flex items-center justify-center flex-shrink-0 px-2 sm:px-3"
         >
           Enter
         </button>
