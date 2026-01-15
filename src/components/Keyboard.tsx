@@ -8,7 +8,7 @@ interface KeyboardProps {
 }
 
 /**
- * Компонент виртуальной клавиатуры
+ * Virtual keyboard component
  */
 export const Keyboard = ({ onKeyPress, onDelete, letterStates }: KeyboardProps) => {
   const firstRow = ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'];

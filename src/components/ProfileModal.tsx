@@ -14,7 +14,7 @@ interface ProfileModalProps {
 }
 
 /**
- * Модальное окно профиля со статистикой
+ * Profile modal with statistics
  */
 export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,7 +25,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
 
   const handleSubmitStats = async () => {
     if (!userInfo?.walletAddress) {
-      setSubmitError('Кошелек не подключен. Пожалуйста, подключите кошелек через Farcaster.');
+      setSubmitError('Wallet not connected. Please connect a wallet through Farcaster.');
       return;
     }
 
@@ -36,7 +36,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
     try {
       const provider = await sdk.wallet.getEthereumProvider();
       if (!provider) {
-        setSubmitError('Не удалось получить провайдер кошелька');
+        setSubmitError('Failed to get wallet provider');
         setIsSubmitting(false);
         return;
       }
@@ -49,9 +49,9 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
         const txLink = `https://basescan.org/tx/${txHash}`;
         setSubmitSuccess(
           <div>
-            <div className="font-semibold mb-2">✅ Статистика успешно отправлена в блокчейн!</div>
+            <div className="font-semibold mb-2">✅ Statistics successfully submitted to blockchain!</div>
             <div className="text-sm mb-2">
-              Транзакция подтверждена. Данные записаны в контракт.
+              Transaction confirmed. Data written to contract.
             </div>
             <a
               href={txLink}
@@ -59,47 +59,47 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
               rel="noopener noreferrer"
               className="text-blue-600 dark:text-blue-400 underline text-sm mt-1 block"
             >
-              📊 Просмотреть транзакцию на BaseScan: {txHash.slice(0, 10)}...
+              📊 View transaction on BaseScan: {txHash.slice(0, 10)}...
             </a>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              Примечание: Транзакция может не сразу появиться в истории кошелька. 
-              Проверьте статус на BaseScan по ссылке выше.
+              Note: Transaction may not appear immediately in wallet history. 
+              Check status on BaseScan using the link above.
             </div>
           </div>
         );
-        // Очищаем сообщение через 15 секунд
+        // Clear message after 15 seconds
         setTimeout(() => {
           setSubmitSuccess(null);
         }, 15000);
       } else {
-        // Если есть txHash, но success = false, значит транзакция отправлена, но не подтверждена
+        // If txHash exists but success = false, transaction was sent but not confirmed
         if (result.txHash) {
           const txLink = `https://basescan.org/tx/${result.txHash}`;
           setSubmitError(
             <div>
-              <div>{result.error || 'Транзакция отправлена, но не подтверждена'}</div>
+              <div>{result.error || 'Transaction sent but not confirmed'}</div>
               <a
                 href={txLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 dark:text-blue-400 underline text-sm mt-1 block"
               >
-                Проверить статус: {result.txHash.slice(0, 10)}...
+                Check status: {result.txHash.slice(0, 10)}...
               </a>
             </div>
           );
         } else {
-          setSubmitError(result.error || 'Неизвестная ошибка');
+          setSubmitError(result.error || 'Unknown error');
         }
       }
     } catch (error: any) {
-      console.error('Ошибка отправки статистики:', error);
+      console.error('Error submitting statistics:', error);
       const errorMessage = error?.message || error?.error?.message || String(error);
-      // Убираем адреса из сообщения об ошибке
+      // Remove addresses from error message
       const cleanError = errorMessage
-        .replace(/0x[a-fA-F0-9]{40}/g, '[адрес]')
-        .replace(/0x[a-fA-F0-9]{64}/g, '[хеш]');
-      setSubmitError(cleanError || 'Произошла ошибка при отправке статистики');
+        .replace(/0x[a-fA-F0-9]{40}/g, '[address]')
+        .replace(/0x[a-fA-F0-9]{64}/g, '[hash]');
+      setSubmitError(cleanError || 'An error occurred while submitting statistics');
     } finally {
       setIsSubmitting(false);
     }
@@ -115,7 +115,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Профиль</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Profile</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-2xl"
@@ -124,7 +124,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
           </button>
         </div>
 
-        {/* Информация о пользователе */}
+        {/* User information */}
         {userInfo && (
           <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-4 mb-4">
@@ -141,7 +141,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
               )}
               <div className="flex-1">
                 <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {userInfo.displayName || userInfo.username || 'Пользователь'}
+                  {userInfo.displayName || userInfo.username || 'User'}
                 </div>
                 {userInfo.username && userInfo.username !== userInfo.displayName && (
                   <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -160,7 +160,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
               </div>
               {userInfo.walletAddress && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Кошелек:</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Wallet:</span>
                   <span className="text-sm font-mono font-semibold text-gray-900 dark:text-white">
                     {formatWalletAddress(userInfo.walletAddress)}
                   </span>
@@ -170,45 +170,45 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
           </div>
         )}
 
-        {/* Статистика в стиле карточек */}
+        {/* Statistics in card style */}
         <div className="mb-6">
           <div className="text-xs text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-1">LIFETIME</div>
           <h3 className="text-xl font-bold text-white mb-4">All-time performance</h3>
           
           <div className="grid grid-cols-2 gap-3">
-            {/* Всего игр - темно-фиолетовый-синий */}
+            {/* Total games - dark purple-blue */}
             <div className="bg-[#2a1f3d] dark:bg-[#2a1f3d] rounded-lg p-4">
-              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">Всего игр</div>
+              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">TOTAL GAMES</div>
               <div className="text-3xl font-bold text-white mb-1">{stats.totalGames}</div>
-              <div className="text-gray-400 text-xs">Всего сыграно</div>
+              <div className="text-gray-400 text-xs">All puzzles played</div>
             </div>
 
-            {/* Победы - темно-бирюзовый-зеленый */}
+            {/* Wins - dark teal-green */}
             <div className="bg-[#1a2f2a] dark:bg-[#1a2f2a] rounded-lg p-4">
-              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">Победы</div>
+              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">WINS</div>
               <div className="text-3xl font-bold text-white mb-1">{stats.wins}</div>
-              <div className="text-gray-400 text-xs">Выигранных игр</div>
+              <div className="text-gray-400 text-xs">Games won</div>
             </div>
 
-            {/* Поражения - темно-фиолетовый-синий */}
+            {/* Losses - dark purple-blue */}
             <div className="bg-[#2a1f3d] dark:bg-[#2a1f3d] rounded-lg p-4">
-              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">Поражения</div>
+              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">LOSSES</div>
               <div className="text-3xl font-bold text-white mb-1">{stats.losses}</div>
-              <div className="text-gray-400 text-xs">Проигранных игр</div>
+              <div className="text-gray-400 text-xs">Games lost</div>
             </div>
 
-            {/* Процент побед - темно-бирюзовый-зеленый */}
+            {/* Win percentage - dark teal-green */}
             <div className="bg-[#1a2f2a] dark:bg-[#1a2f2a] rounded-lg p-4">
-              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">Процент побед</div>
+              <div className="text-white text-xs font-bold uppercase tracking-wide mb-2">WIN PERCENTAGE</div>
               <div className="text-3xl font-bold text-white mb-1">
                 {stats.winPercentage > 0 ? `${stats.winPercentage.toFixed(1)}%` : '0%'}
               </div>
-              <div className="text-gray-400 text-xs">Успешность</div>
+              <div className="text-gray-400 text-xs">Success rate</div>
             </div>
           </div>
         </div>
 
-        {/* Кнопка отправки статистики в блокчейн */}
+        {/* Blockchain stats submission button */}
         {userInfo?.walletAddress && (
           <div className="mb-4">
             <button
@@ -238,7 +238,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  <span>Отправка...</span>
+                  <span>Submitting...</span>
                 </>
               ) : (
                 <span>Submit stats onchain</span>
@@ -259,7 +259,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
 
             {stats.totalGames === 0 && (
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
-                Сыграйте хотя бы одну игру, чтобы отправить статистику
+                Play at least one game to submit statistics
               </p>
             )}
           </div>
@@ -267,7 +267,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
 
         {!userInfo?.walletAddress && (
           <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 rounded text-sm">
-            Для отправки статистики в блокчейн необходимо подключить кошелек через Farcaster
+            To submit statistics to blockchain, please connect a wallet through Farcaster
           </div>
         )}
 
@@ -276,7 +276,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
             onClick={onClose}
             className="bg-blue-800 hover:bg-blue-700 text-gray-200 font-semibold py-2 px-6 rounded transition-colors"
           >
-            Закрыть
+            Close
           </button>
         </div>
       </div>

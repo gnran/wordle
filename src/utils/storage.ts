@@ -6,18 +6,18 @@ const LAST_PLAYED_KEY = 'wordle-last-played';
 const LAST_SUBMITTED_KEY = 'wordle-last-submitted';
 
 /**
- * Сохранить состояние игры в localStorage
+ * Save game state to localStorage
  */
 export const saveGameState = (gameState: GameState): void => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
   } catch (error) {
-    console.error('Ошибка сохранения состояния игры:', error);
+    console.error('Error saving game state:', error);
   }
 };
 
 /**
- * Загрузить состояние игры из localStorage
+ * Load game state from localStorage
  */
 export const loadGameState = (): GameState | null => {
   try {
@@ -25,24 +25,24 @@ export const loadGameState = (): GameState | null => {
     if (!stored) return null;
     return JSON.parse(stored) as GameState;
   } catch (error) {
-    console.error('Ошибка загрузки состояния игры:', error);
+    console.error('Error loading game state:', error);
     return null;
   }
 };
 
 /**
- * Сохранить статистику пользователя
+ * Save user statistics
  */
 export const saveStats = (stats: UserStats): void => {
   try {
     localStorage.setItem(STATS_KEY, JSON.stringify(stats));
   } catch (error) {
-    console.error('Ошибка сохранения статистики:', error);
+    console.error('Error saving statistics:', error);
   }
 };
 
 /**
- * Загрузить статистику пользователя
+ * Load user statistics
  */
 export const loadStats = (): UserStats => {
   try {
@@ -51,10 +51,10 @@ export const loadStats = (): UserStats => {
       return JSON.parse(stored) as UserStats;
     }
   } catch (error) {
-    console.error('Ошибка загрузки статистики:', error);
+    console.error('Error loading statistics:', error);
   }
 
-  // Возвращаем статистику по умолчанию
+  // Return default statistics
   return {
     totalGames: 0,
     wins: 0,
@@ -66,7 +66,7 @@ export const loadStats = (): UserStats => {
 };
 
 /**
- * Проверить, была ли игра сегодня
+ * Check if game was played today
  */
 export const wasPlayedToday = (): boolean => {
   try {
@@ -82,29 +82,29 @@ export const wasPlayedToday = (): boolean => {
 };
 
 /**
- * Сохранить дату последней игры
+ * Save last played date
  */
 export const saveLastPlayedDate = (): void => {
   try {
     localStorage.setItem(LAST_PLAYED_KEY, new Date().toISOString());
   } catch (error) {
-    console.error('Ошибка сохранения даты:', error);
+    console.error('Error saving date:', error);
   }
 };
 
 /**
- * Очистить сохраненное состояние игры
+ * Clear saved game state
  */
 export const clearGameState = (): void => {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
-    console.error('Ошибка очистки состояния игры:', error);
+    console.error('Error clearing game state:', error);
   }
 };
 
 /**
- * Сбросить всю статистику
+ * Reset all statistics
  */
 export const resetStats = (): void => {
   try {
@@ -113,23 +113,23 @@ export const resetStats = (): void => {
     localStorage.removeItem(LAST_PLAYED_KEY);
     localStorage.removeItem(LAST_SUBMITTED_KEY);
   } catch (error) {
-    console.error('Ошибка сброса статистики:', error);
+    console.error('Error resetting statistics:', error);
   }
 };
 
 /**
- * Сохранить информацию о последней отправке статистики в блокчейн
+ * Save information about last statistics submission to blockchain
  */
 export const saveLastSubmitted = (lastSubmitted: LastSubmitted): void => {
   try {
     localStorage.setItem(LAST_SUBMITTED_KEY, JSON.stringify(lastSubmitted));
   } catch (error) {
-    console.error('Ошибка сохранения последней отправки:', error);
+    console.error('Error saving last submission:', error);
   }
 };
 
 /**
- * Загрузить информацию о последней отправке статистики в блокчейн
+ * Load information about last statistics submission to blockchain
  */
 export const loadLastSubmitted = (): LastSubmitted | null => {
   try {
@@ -138,18 +138,18 @@ export const loadLastSubmitted = (): LastSubmitted | null => {
       return JSON.parse(stored) as LastSubmitted;
     }
   } catch (error) {
-    console.error('Ошибка загрузки последней отправки:', error);
+    console.error('Error loading last submission:', error);
   }
   return null;
 };
 
 /**
- * Очистить информацию о последней отправке (при сбросе статистики)
+ * Clear information about last submission (when resetting statistics)
  */
 export const clearLastSubmitted = (): void => {
   try {
     localStorage.removeItem(LAST_SUBMITTED_KEY);
   } catch (error) {
-    console.error('Ошибка очистки последней отправки:', error);
+    console.error('Error clearing last submission:', error);
   }
 };

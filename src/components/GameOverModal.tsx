@@ -8,7 +8,7 @@ interface GameOverModalProps {
 }
 
 /**
- * Модальное окно окончания игры
+ * Game over modal
  */
 export const GameOverModal = ({
   isOpen,
@@ -20,6 +20,11 @@ export const GameOverModal = ({
 }: GameOverModalProps) => {
   if (!isOpen) return null;
 
+  const getAttemptText = (attempts: number) => {
+    if (attempts === 1) return 'attempt';
+    return 'attempts';
+  };
+
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
@@ -30,16 +35,16 @@ export const GameOverModal = ({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">
-          {won ? '🎉 Поздравляем!' : '😔 Игра окончена'}
+          {won ? '🎉 Congratulations!' : '😔 Game Over'}
         </h2>
         
         {won ? (
           <p className="text-lg mb-2 text-gray-700 dark:text-gray-300">
-            Вы угадали слово за {attempts} {attempts === 1 ? 'попытку' : attempts < 5 ? 'попытки' : 'попыток'}!
+            You guessed the word in {attempts} {getAttemptText(attempts)}!
           </p>
         ) : (
           <p className="text-lg mb-2 text-gray-700 dark:text-gray-300">
-            Загаданное слово было: <span className="font-bold text-green-600 dark:text-green-400">{targetWord}</span>
+            The word was: <span className="font-bold text-green-600 dark:text-green-400">{targetWord}</span>
           </p>
         )}
 
@@ -48,13 +53,13 @@ export const GameOverModal = ({
             onClick={onNewGame}
             className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded transition-colors"
           >
-            Новая игра
+            New Game
           </button>
           <button
             onClick={onClose}
             className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded transition-colors"
           >
-            Закрыть
+            Close
           </button>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { UserStats, LastSubmitted } from '../types';
 import { loadLastSubmitted, saveLastSubmitted } from './storage';
 
 /**
- * Вычислить дельту между локальной статистикой и последней отправленной
+ * Calculate delta between local statistics and last submitted
  */
 export function calculateDelta(
   localStats: UserStats,
@@ -26,7 +26,7 @@ export function calculateDelta(
 }
 
 /**
- * Валидация дельты перед отправкой
+ * Validate delta before submission
  */
 export function validateDelta(
   deltaWins: number,
@@ -35,7 +35,7 @@ export function validateDelta(
   if (deltaWins < 0 || deltaLosses < 0) {
     return {
       valid: false,
-      error: 'Дельта не может быть отрицательной',
+      error: 'Delta cannot be negative',
     };
   }
 
@@ -44,14 +44,14 @@ export function validateDelta(
   if (deltaGames === 0) {
     return {
       valid: false,
-      error: 'Нечего отправлять',
+      error: 'Nothing to submit',
     };
   }
 
   if (deltaGames > 200) {
     return {
       valid: false,
-      error: 'Слишком большой батч (максимум 200 игр)',
+      error: 'Batch too large (maximum 200 games)',
     };
   }
 
@@ -59,21 +59,21 @@ export function validateDelta(
 }
 
 /**
- * Получить экземпляр контракта
+ * Get contract instance
  */
 export async function getContract(provider: BrowserProvider): Promise<Contract> {
   return new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 }
 
 /**
- * Получить экземпляр контракта с подписантом (для транзакций)
+ * Get contract instance with signer (for transactions)
  */
 export async function getContractWithSigner(signer: Signer): Promise<Contract> {
   return new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 }
 
 /**
- * Проверить подключение к правильной сети
+ * Check connection to correct network
  */
 export async function checkNetwork(
   provider: BrowserProvider
@@ -87,7 +87,7 @@ export async function checkNetwork(
       return {
         correct: false,
         chainId,
-        error: `Неправильная сеть. Ожидается Base (${CONTRACT_CHAIN_ID}), получена ${chainId}`,
+        error: `Wrong network. Expected Base (${CONTRACT_CHAIN_ID}), got ${chainId}`,
       };
     }
 
@@ -95,13 +95,13 @@ export async function checkNetwork(
   } catch (error: any) {
     return {
       correct: false,
-      error: error.message || 'Ошибка проверки сети',
+      error: error.message || 'Network check error',
     };
   }
 }
 
 /**
- * Переключиться на сеть Base
+ * Switch to Base network
  */
 export async function switchToBaseNetwork(
   provider: BrowserProvider
@@ -122,7 +122,7 @@ export async function switchToBaseNetwork(
     ]);
     return { success: true };
   } catch (error: any) {
-    // Цепочка не добавлена, попробуем добавить
+    // Chain not added, try to add it
     if (error.code === 4902) {
       try {
         await provider.send('wallet_addEthereumChain', [
@@ -142,19 +142,19 @@ export async function switchToBaseNetwork(
       } catch (addError: any) {
         return {
           success: false,
-          error: `Не удалось добавить сеть: ${addError.message}`,
+          error: `Failed to add network: ${addError.message}`,
         };
       }
     }
     return {
       success: false,
-      error: `Не удалось переключить сеть: ${error.message}`,
+      error: `Failed to switch network: ${error.message}`,
     };
   }
 }
 
 /**
- * Получить текущий nonce из контракта
+ * Get current nonce from contract
  */
 export async function getCurrentNonce(
   playerAddress: string,
@@ -165,13 +165,13 @@ export async function getCurrentNonce(
     const nonce = await contract.getNonce(playerAddress);
     return Number(nonce);
   } catch (error) {
-    console.error('Ошибка получения nonce:', error);
+    console.error('Error getting nonce:', error);
     return 0;
   }
 }
 
 /**
- * Отправить статистику в блокчейн
+ * Submit statistics to blockchain
  */
 export async function submitStatsOnchain(
   localStats: UserStats,
@@ -183,7 +183,7 @@ export async function submitStatsOnchain(
   error?: string;
 }> {
   try {
-    // Проверка сети
+    // Network check
     const networkCheck = await checkNetwork(provider);
     if (!networkCheck.correct) {
       const switchResult = await switchToBaseNetwork(provider);
@@ -193,28 +193,28 @@ export async function submitStatsOnchain(
           error: networkCheck.error || switchResult.error,
         };
       }
-      // Повторная проверка после переключения
+      // Recheck after switching
       const recheck = await checkNetwork(provider);
       if (!recheck.correct) {
         return {
           success: false,
-          error: 'Не удалось переключиться на правильную сеть',
+          error: 'Failed to switch to correct network',
         };
       }
     }
 
-    // Загружаем последнюю отправленную статистику
+    // Load last submitted statistics
     let lastSubmitted = loadLastSubmitted();
 
-    // Получаем текущий nonce из контракта
+    // Get current nonce from contract
     const currentNonce = await getCurrentNonce(walletAddress, provider);
 
-    // Если lastSubmitted отсутствует, но в контракте уже есть данные (nonce > 0),
-    // нужно синхронизировать: получить статистику из контракта
+    // If lastSubmitted is missing but contract already has data (nonce > 0),
+    // need to sync: get statistics from contract
     if (!lastSubmitted && currentNonce > 0) {
       const onchainStats = await getOnchainStats(walletAddress, provider);
       if (onchainStats) {
-        // Синхронизируем lastSubmitted с данными из контракта
+        // Sync lastSubmitted with contract data
         lastSubmitted = {
           games: onchainStats.totalGames,
           wins: onchainStats.wins,
@@ -225,55 +225,55 @@ export async function submitStatsOnchain(
       }
     }
 
-    // Вычисляем дельту
+    // Calculate delta
     const { deltaWins, deltaLosses, expectedNonce } = calculateDelta(
       localStats,
       lastSubmitted
     );
 
-    // Валидация дельты
+    // Validate delta
     const validation = validateDelta(deltaWins, deltaLosses);
     if (!validation.valid) {
       return { success: false, error: validation.error };
     }
 
-    // Проверяем соответствие nonce
+    // Check nonce match
     if (currentNonce !== expectedNonce) {
-      // Если nonce не совпадает, но есть данные в контракте, предлагаем синхронизацию
+      // If nonce doesn't match but there's data in contract, suggest sync
       if (currentNonce > 0 && !lastSubmitted) {
         return {
           success: false,
-          error: `Обнаружена статистика в блокчейне. Обновите страницу для синхронизации.`,
+          error: `Statistics found in blockchain. Refresh page to sync.`,
         };
       }
       return {
         success: false,
-        error: `Несоответствие nonce. Ожидается ${expectedNonce}, получено ${currentNonce}. Обновите страницу и попробуйте снова.`,
+        error: `Nonce mismatch. Expected ${expectedNonce}, got ${currentNonce}. Refresh page and try again.`,
       };
     }
 
-    // Получаем контракт с подписантом
+    // Get contract with signer
     const signer = await provider.getSigner();
     const contract = await getContractWithSigner(signer);
 
-    // Проверяем, что контракт существует
+    // Check that contract exists
     const code = await provider.getCode(CONTRACT_ADDRESS);
     if (code === '0x' || code === '0x0') {
       return {
         success: false,
-        error: 'Контракт не найден по указанному адресу. Проверьте конфигурацию.',
+        error: 'Contract not found at specified address. Check configuration.',
       };
     }
 
-    // Логируем параметры для отладки
-    console.log('Отправка транзакции:', {
+    // Log parameters for debugging
+    console.log('Submitting transaction:', {
       deltaWins,
       deltaLosses,
       expectedNonce,
       contractAddress: CONTRACT_ADDRESS,
     });
 
-    // Оцениваем газ перед отправкой
+    // Estimate gas before submission
     let gasEstimate;
     try {
       gasEstimate = await contract.submitStatsSnapshot.estimateGas(
@@ -281,55 +281,55 @@ export async function submitStatsOnchain(
         deltaLosses,
         expectedNonce
       );
-      console.log('Оценка газа:', gasEstimate.toString());
+      console.log('Gas estimate:', gasEstimate.toString());
     } catch (estimateError: any) {
-      console.error('Ошибка оценки газа:', estimateError);
-      // Если оценка не удалась, используем дефолтное значение
+      console.error('Gas estimation error:', estimateError);
+      // If estimation failed, use default value
       gasEstimate = BigInt(100000);
     }
 
-    // Отправляем транзакцию
-    // Примечание: Если кошелек показывает "Предпросмотр недоступен",
-    // это обычно означает, что контракт не верифицирован на BaseScan
-    // или кошелек не может получить ABI. Транзакция все равно должна работать.
+    // Send transaction
+    // Note: If wallet shows "Preview unavailable",
+    // this usually means contract is not verified on BaseScan
+    // or wallet can't get ABI. Transaction should still work.
     const tx = await contract.submitStatsSnapshot(
       deltaWins,
       deltaLosses,
       expectedNonce,
       {
-        gasLimit: gasEstimate + (gasEstimate / BigInt(5)), // Добавляем 20% запас
+        gasLimit: gasEstimate + (gasEstimate / BigInt(5)), // Add 20% buffer
       }
     );
 
-    // Сохраняем хеш транзакции сразу
+    // Save transaction hash immediately
     const txHash = tx.hash;
     if (!txHash) {
       return {
         success: false,
-        error: 'Не удалось получить хеш транзакции',
+        error: 'Failed to get transaction hash',
       };
     }
 
-    // Ждем подтверждения (до 3 блоков для надежности)
+    // Wait for confirmation (up to 3 blocks for reliability)
     let receipt;
     try {
-      receipt = await tx.wait(3); // Ждем 3 подтверждения
+      receipt = await tx.wait(3); // Wait for 3 confirmations
     } catch (waitError: any) {
-      // Если транзакция была отправлена, но произошла ошибка при ожидании,
-      // все равно сохраняем хеш, чтобы пользователь мог проверить транзакцию
-      console.error('Ошибка ожидания подтверждения:', waitError);
+      // If transaction was sent but error occurred while waiting,
+      // still save hash so user can check transaction
+      console.error('Confirmation wait error:', waitError);
       
-      // Проверяем, была ли транзакция выполнена (revert)
+      // Check if transaction was executed (revert)
       if (waitError.receipt) {
-        // Транзакция была включена в блок, но произошел revert
+        // Transaction was included in block but reverted
         return {
           success: false,
-          error: 'Транзакция отклонена контрактом. Проверьте транзакцию в блокчейне.',
+          error: 'Transaction rejected by contract. Check transaction in blockchain.',
         };
       }
       
-      // Транзакция отправлена, но еще не подтверждена
-      // Сохраняем хеш, чтобы пользователь мог проверить статус позже
+      // Transaction sent but not yet confirmed
+      // Save hash so user can check status later
       const newLastSubmitted: LastSubmitted = {
         games: localStats.totalGames,
         wins: localStats.wins,
@@ -342,32 +342,32 @@ export async function submitStatsOnchain(
 
       return {
         success: false,
-        error: `Транзакция отправлена, но не подтверждена. Хеш: ${txHash.slice(0, 10)}... Проверьте статус позже.`,
+        error: `Transaction sent but not confirmed. Hash: ${txHash.slice(0, 10)}... Check status later.`,
       };
     }
 
-    // Проверяем статус транзакции
+    // Check transaction status
     if (receipt && receipt.status === 1 && receipt.hash) {
-      // Транзакция успешно подтверждена
-      console.log('Транзакция успешно подтверждена:', receipt.hash);
+      // Transaction successfully confirmed
+      console.log('Transaction successfully confirmed:', receipt.hash);
       
-      // Проверяем, что nonce действительно увеличился
+      // Check that nonce actually increased
       const newNonce = await getCurrentNonce(walletAddress, provider);
-      console.log('Nonce после транзакции:', newNonce, 'Ожидалось:', expectedNonce + 1);
+      console.log('Nonce after transaction:', newNonce, 'Expected:', expectedNonce + 1);
       
       if (newNonce !== expectedNonce + 1) {
-        console.warn('Nonce не увеличился после транзакции. Ожидалось:', expectedNonce + 1, 'Получено:', newNonce);
-        // Ждем немного и проверяем снова (может быть задержка)
+        console.warn('Nonce did not increase after transaction. Expected:', expectedNonce + 1, 'Got:', newNonce);
+        // Wait a bit and check again (may be delay)
         await new Promise(resolve => setTimeout(resolve, 2000));
         const retryNonce = await getCurrentNonce(walletAddress, provider);
-        console.log('Nonce после повторной проверки:', retryNonce);
+        console.log('Nonce after retry check:', retryNonce);
       }
 
-      // Проверяем, что данные действительно записались в контракт
+      // Check that data was actually written to contract
       const onchainStats = await getOnchainStats(walletAddress, provider);
       if (onchainStats) {
-        console.log('Статистика в контракте после транзакции:', onchainStats);
-        console.log('Локальная статистика:', localStats);
+        console.log('Stats in contract after transaction:', onchainStats);
+        console.log('Local stats:', localStats);
       }
 
       const newLastSubmitted: LastSubmitted = {
@@ -385,107 +385,107 @@ export async function submitStatsOnchain(
         txHash: receipt.hash,
       };
     } else if (receipt && receipt.status === 0) {
-      // Транзакция была включена в блок, но произошел revert
-      console.error('Транзакция revert:', receipt);
+      // Transaction was included in block but reverted
+      console.error('Transaction revert:', receipt);
       
-      // Пытаемся получить причину revert из логов
-      let revertReason = 'Неизвестная причина';
+      // Try to get revert reason from logs
+      let revertReason = 'Unknown reason';
       if (receipt.logs && receipt.logs.length > 0) {
-        revertReason = 'Проверьте логи транзакции в блокчейне';
+        revertReason = 'Check transaction logs in blockchain';
       }
       
       return {
         success: false,
-        error: `Транзакция отклонена контрактом (revert). ${revertReason}`,
+        error: `Transaction rejected by contract (revert). ${revertReason}`,
         txHash: receipt.hash,
       };
     }
 
     return {
       success: false,
-      error: 'Транзакция не была подтверждена',
+      error: 'Transaction was not confirmed',
     };
   } catch (error: any) {
-    console.error('Ошибка отправки статистики:', error);
+    console.error('Error submitting statistics:', error);
 
-    // Парсим распространенные ошибки
+    // Parse common errors
     const errorMessage = error?.message || error?.error?.message || String(error);
     const errorCode = error?.code || error?.error?.code;
 
-    // Обработка ошибок от контракта
+    // Handle contract errors
     if (errorMessage?.includes('INVALID_NONCE')) {
       return {
         success: false,
-        error: 'Неверный nonce. Обновите страницу и попробуйте снова.',
+        error: 'Invalid nonce. Refresh page and try again.',
       };
     }
     if (errorMessage?.includes('NOTHING_TO_SUBMIT')) {
-      return { success: false, error: 'Нечего отправлять' };
+      return { success: false, error: 'Nothing to submit' };
     }
     if (errorMessage?.includes('BATCH_TOO_LARGE')) {
       return {
         success: false,
-        error: 'Слишком большой батч (максимум 200 игр)',
+        error: 'Batch too large (maximum 200 games)',
       };
     }
 
-    // Обработка ошибок от кошелька
+    // Handle wallet errors
     if (errorCode === 4001 || errorCode === 'ACTION_REJECTED' || errorMessage?.includes('User rejected')) {
       return {
         success: false,
-        error: 'Транзакция отклонена пользователем',
+        error: 'Transaction rejected by user',
       };
     }
 
-    // Обработка ошибок сети
+    // Handle network errors
     if (errorCode === -32603 || errorMessage?.includes('network') || errorMessage?.includes('Network')) {
       return {
         success: false,
-        error: 'Ошибка сети. Проверьте подключение и попробуйте снова.',
+        error: 'Network error. Check connection and try again.',
       };
     }
 
-    // Обработка ошибок недостатка газа
+    // Handle insufficient gas errors
     if (errorMessage?.includes('insufficient funds') || errorMessage?.includes('gas') || errorCode === -32000) {
       return {
         success: false,
-        error: 'Недостаточно средств для оплаты газа. Убедитесь, что на кошельке есть ETH.',
+        error: 'Insufficient funds to pay for gas. Make sure wallet has ETH.',
       };
     }
 
-    // Обработка ошибок контракта (revert)
+    // Handle contract errors (revert)
     if (errorMessage?.includes('revert') || errorMessage?.includes('execution reverted')) {
       const revertReason = errorMessage.match(/revert\s+(.+)/i)?.[1] || '';
       if (revertReason.includes('INVALID_NONCE')) {
         return {
           success: false,
-          error: 'Неверный nonce. Обновите страницу и попробуйте снова.',
+          error: 'Invalid nonce. Refresh page and try again.',
         };
       }
       return {
         success: false,
-        error: `Ошибка контракта: ${revertReason || 'Транзакция отклонена контрактом'}`,
+        error: `Contract error: ${revertReason || 'Transaction rejected by contract'}`,
       };
     }
 
-    // Убираем адреса из сообщения об ошибке
+    // Remove addresses from error message
     let cleanError = errorMessage;
     if (cleanError) {
-      // Удаляем адреса (0x...)
-      cleanError = cleanError.replace(/0x[a-fA-F0-9]{40}/g, '[адрес]');
-      // Удаляем длинные хеши
-      cleanError = cleanError.replace(/0x[a-fA-F0-9]{64}/g, '[хеш]');
+      // Remove addresses (0x...)
+      cleanError = cleanError.replace(/0x[a-fA-F0-9]{40}/g, '[address]');
+      // Remove long hashes
+      cleanError = cleanError.replace(/0x[a-fA-F0-9]{64}/g, '[hash]');
     }
 
     return {
       success: false,
-      error: cleanError || 'Произошла ошибка при отправке транзакции. Попробуйте снова.',
+      error: cleanError || 'An error occurred while sending transaction. Please try again.',
     };
   }
 }
 
 /**
- * Получить статистику из блокчейна
+ * Get statistics from blockchain
  */
 export async function getOnchainStats(
   playerAddress: string,
@@ -507,12 +507,12 @@ export async function getOnchainStats(
       totalGames: Number(stats.totalGames),
       wins: Number(stats.wins),
       losses: Number(stats.losses),
-      winPercentage: Number(winPercentage) / 100, // Конвертируем из 10000 = 100%
+      winPercentage: Number(winPercentage) / 100, // Convert from 10000 = 100%
       lastUpdated: Number(stats.lastUpdated),
       nonce: Number(stats.nonce),
     };
   } catch (error) {
-    console.error('Ошибка получения статистики из блокчейна:', error);
+    console.error('Error getting statistics from blockchain:', error);
     return null;
   }
 }

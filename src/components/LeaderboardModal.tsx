@@ -4,7 +4,7 @@ interface LeaderboardModalProps {
 }
 
 /**
- * Модальное окно лидерборда (пока пустое)
+ * Leaderboard modal (currently empty)
  */
 export const LeaderboardModal = ({ isOpen, onClose }: LeaderboardModalProps) => {
   if (!isOpen) return null;
@@ -15,11 +15,11 @@ export const LeaderboardModal = ({ isOpen, onClose }: LeaderboardModalProps) => 
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-800 rounded-lg p-6 sm:p-8 max-w-md w-full"
+        className="bg-white dark:bg-[#0f1419] rounded-lg p-6 sm:p-8 max-w-md w-full"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Лидерборд</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Leaderboard</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-2xl"
@@ -29,14 +29,14 @@ export const LeaderboardModal = ({ isOpen, onClose }: LeaderboardModalProps) => 
         </div>
 
         <div className="text-center py-8">
-          <p className="text-gray-600 dark:text-gray-400">Лидерборд пока пуст</p>
+          <p className="text-gray-600 dark:text-gray-400">Leaderboard is currently empty</p>
         </div>
 
         <button
           onClick={onClose}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+          className="w-full bg-blue-800 hover:bg-blue-700 text-gray-200 font-semibold py-2 px-4 rounded transition-colors"
         >
-          Закрыть
+          Close
         </button>
       </div>
     </div>

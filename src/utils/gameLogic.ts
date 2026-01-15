@@ -1,10 +1,10 @@
 import { LetterState, Letter } from '../types';
 
 /**
- * Вычисляет состояние каждой буквы в предположении
- * @param guess - предположение игрока
- * @param targetWord - загаданное слово
- * @returns массив состояний букв
+ * Calculates state of each letter in guess
+ * @param guess - player's guess
+ * @param targetWord - target word
+ * @returns array of letter states
  */
 export const evaluateGuess = (guess: string, targetWord: string): LetterState[] => {
   const result: LetterState[] = new Array(5).fill('absent');
@@ -12,7 +12,7 @@ export const evaluateGuess = (guess: string, targetWord: string): LetterState[] 
   const guessLetters = guess.split('');
   const usedIndices = new Set<number>();
 
-  // Сначала находим правильные позиции (correct)
+  // First find correct positions (correct)
   for (let i = 0; i < 5; i++) {
     if (guessLetters[i] === targetLetters[i]) {
       result[i] = 'correct';
@@ -20,12 +20,12 @@ export const evaluateGuess = (guess: string, targetWord: string): LetterState[] 
     }
   }
 
-  // Затем находим буквы, которые есть в слове, но не на правильной позиции (present)
+  // Then find letters that are in word but not in correct position (present)
   for (let i = 0; i < 5; i++) {
     if (result[i] === 'correct') continue;
 
     const letter = guessLetters[i];
-    // Ищем букву в загаданном слове, которая еще не использована
+    // Find letter in target word that hasn't been used yet
     for (let j = 0; j < 5; j++) {
       if (targetLetters[j] === letter && !usedIndices.has(j)) {
         result[i] = 'present';
@@ -39,7 +39,7 @@ export const evaluateGuess = (guess: string, targetWord: string): LetterState[] 
 };
 
 /**
- * Преобразует строку в массив букв с состояниями
+ * Converts string to array of letters with states
  */
 export const wordToLetters = (word: string, states: LetterState[]): Letter[] => {
   return word.split('').map((char, index) => ({
@@ -49,7 +49,7 @@ export const wordToLetters = (word: string, states: LetterState[]): Letter[] => 
 };
 
 /**
- * Получить цвет для состояния буквы
+ * Get color for letter state
  */
 export const getLetterColor = (state: LetterState): string => {
   switch (state) {

@@ -18,16 +18,16 @@ const MAX_ATTEMPTS = 6;
 const WORD_LENGTH = 5;
 
 /**
- * Главный компонент приложения Wordle
+ * Main Wordle application component
  */
 function App() {
   const [gameState, setGameState] = useState<GameState>(() => {
-    // Пытаемся загрузить сохраненное состояние
+    // Try to load saved state
     const saved = loadGameState();
     if (saved && saved.gameStatus === 'playing') {
       return saved;
     }
-    // Создаем новую игру
+    // Create a new game
     return {
       targetWord: getRandomWord(),
       currentGuess: '',
@@ -46,19 +46,19 @@ function App() {
     if (saved) {
       return saved === 'dark';
     }
-    return true; // По умолчанию темная тема
+    return true; // Dark theme by default
   });
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
-  // Уведомляем SDK о готовности приложения
+  // Notify SDK that app is ready
   useEffect(() => {
     sdk.actions.ready();
   }, []);
 
-  // Получаем данные пользователя из Context API и Wallet
+  // Get user data from Context API and Wallet
   useEffect(() => {
     async function fetchUserInfo() {
       try {
@@ -69,16 +69,16 @@ function App() {
         try {
           const provider = await sdk.wallet.getEthereumProvider();
           if (provider) {
-            // Сначала пытаемся получить уже подключенные аккаунты (без запроса разрешения)
+            // First try to get already connected accounts (without requesting permission)
             let accounts = await provider.request({ method: 'eth_accounts' });
             
-            // Если аккаунтов нет, пытаемся запросить (может показать промпт пользователю)
+            // If no accounts, try to request (may show user prompt)
             if (!accounts || accounts.length === 0) {
               try {
                 accounts = await provider.request({ method: 'eth_requestAccounts' });
               } catch (requestError) {
-                // Пользователь может отклонить запрос - это нормально
-                console.log('Пользователь не предоставил доступ к кошельку');
+                // User may reject the request - this is normal
+                console.log('User did not provide wallet access');
               }
             }
             
@@ -87,7 +87,7 @@ function App() {
             }
           }
         } catch (error) {
-          console.warn('Не удалось получить адрес кошелька:', error);
+          console.warn('Failed to get wallet address:', error);
         }
 
         setUserInfo({
@@ -98,14 +98,14 @@ function App() {
           walletAddress
         });
       } catch (error) {
-        console.error('Ошибка получения данных пользователя:', error);
+        console.error('Error fetching user data:', error);
       }
     }
 
     fetchUserInfo();
   }, []);
 
-  // Применяем тему при загрузке и изменении
+  // Apply theme on load and change
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -116,7 +116,7 @@ function App() {
     }
   }, [isDarkMode]);
   
-  // Сохраняем состояние игры при изменении
+  // Save game state on change
   useEffect(() => {
     if (gameState.gameStatus === 'playing') {
       saveGameState(gameState);
@@ -124,18 +124,18 @@ function App() {
   }, [gameState]);
 
   /**
-   * Создает массив строк для отображения на игровом поле
+   * Creates array of rows for display on game board
    */
   const getDisplayRows = (): Letter[][] => {
     const rows: Letter[][] = [];
     
-    // Добавляем уже угаданные строки
+    // Add already guessed rows
     gameState.guesses.forEach((guess) => {
       const states = evaluateGuess(guess, gameState.targetWord);
       rows.push(wordToLetters(guess, states));
     });
 
-    // Добавляем текущую строку только если игра еще идет
+    // Add current row only if game is still playing
     if (gameState.gameStatus === 'playing') {
       const currentRowLetters: Letter[] = [];
       for (let i = 0; i < WORD_LENGTH; i++) {
@@ -147,7 +147,7 @@ function App() {
       rows.push(currentRowLetters);
     }
 
-    // Заполняем оставшиеся строки пустыми буквами
+    // Fill remaining rows with empty letters
     while (rows.length < MAX_ATTEMPTS) {
       rows.push(
         Array(WORD_LENGTH).fill(null).map(() => ({
@@ -161,7 +161,7 @@ function App() {
   };
 
   /**
-   * Получает состояния букв для клавиатуры
+   * Gets letter states for keyboard
    */
   const getLetterStates = (): Record<string, LetterState> => {
     const states: Record<string, LetterState> = {};
@@ -172,7 +172,7 @@ function App() {
         const currentState = states[letter];
         const newState = evaluated[index];
         
-        // Приоритет: correct > present > absent
+        // Priority: correct > present > absent
         if (!currentState || currentState === 'empty' || 
             (currentState === 'absent' && newState !== 'absent') ||
             (currentState === 'present' && newState === 'correct')) {
@@ -185,7 +185,7 @@ function App() {
   };
 
   /**
-   * Обработка нажатия клавиши
+   * Handle key press
    */
   const handleKeyPress = useCallback((key: string) => {
     if (gameState.gameStatus !== 'playing') return;
@@ -199,7 +199,7 @@ function App() {
   }, [gameState.gameStatus, gameState.currentGuess.length]);
 
   /**
-   * Обработка удаления символа
+   * Handle character deletion
    */
   const handleDelete = useCallback(() => {
     if (gameState.gameStatus !== 'playing') return;
@@ -211,23 +211,23 @@ function App() {
   }, [gameState.gameStatus]);
 
   /**
-   * Обработка отправки предположения
+   * Handle guess submission
    */
   const handleEnter = useCallback(() => {
     if (gameState.gameStatus !== 'playing') return;
     
     const guess = gameState.currentGuess.toUpperCase();
     
-    // Проверка длины
+    // Length check
     if (guess.length !== WORD_LENGTH) {
-      setErrorMessage('Слово должно содержать 5 букв');
+      setErrorMessage('Word must contain 5 letters');
       setTimeout(() => setErrorMessage(''), 2000);
       return;
     }
 
-    // Проверка валидности слова
+    // Word validity check
     if (!isValidWord(guess)) {
-      setErrorMessage('Слово не найдено в словаре');
+      setErrorMessage('Word not found in dictionary');
       setTimeout(() => setErrorMessage(''), 2000);
       return;
     }
@@ -253,17 +253,17 @@ function App() {
 
     setGameState(newGameState);
 
-    // Обновляем статистику, если игра окончена
+    // Update stats if game is over
     if (newGameStatus !== 'playing') {
       updateStats(newGameStatus === 'won');
       setShowGameOver(true);
       saveLastPlayedDate();
-      clearGameState(); // Очищаем сохраненное состояние, чтобы при обновлении страницы начиналась новая игра
+      clearGameState(); // Clear saved state so a new game starts on page refresh
     }
   }, [gameState]);
 
   /**
-   * Обновление статистики пользователя
+   * Update user statistics
    */
   const updateStats = (won: boolean) => {
     setStats(prev => {
@@ -286,7 +286,7 @@ function App() {
   };
 
   /**
-   * Начать новую игру
+   * Start a new game
    */
   const handleNewGame = () => {
     const newGameState: GameState = {
@@ -302,10 +302,10 @@ function App() {
   };
 
   /**
-   * Сброс статистики
+   * Reset statistics
    */
   const handleResetStats = () => {
-    if (window.confirm('Вы уверены, что хотите сбросить всю статистику?')) {
+    if (window.confirm('Are you sure you want to reset all statistics?')) {
       resetStats();
       setStats({
         totalGames: 0,
@@ -319,20 +319,20 @@ function App() {
   };
 
   /**
-   * Обработка физической клавиатуры
+   * Handle physical keyboard
    */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (showStats || showGameOver) return;
 
-      // Игнорируем комбинации с модификаторами (Ctrl, Alt, Shift, Meta)
+      // Ignore modifier key combinations (Ctrl, Alt, Shift, Meta)
       if (e.ctrlKey || e.altKey || e.metaKey) {
         return;
       }
 
       const key = e.key.toUpperCase();
       
-      // Английские буквы
+      // English letters
       if (/[A-Z]/.test(key) && key.length === 1) {
         handleKeyPress(key);
       } else if (key === 'BACKSPACE' || key === 'DELETE') {
@@ -354,7 +354,7 @@ function App() {
   };
 
   const handleHomeClick = () => {
-    // Прокрутка наверх или обновление страницы
+    // Scroll to top or refresh page
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -376,7 +376,7 @@ function App() {
               WORDLY
             </h1>
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-              Угадай слово за 6 попыток
+              Guess the word in 6 attempts
             </p>
           </header>
 
@@ -401,16 +401,16 @@ function App() {
             
             <div className="flex gap-2 justify-center mt-4 sm:mt-6 px-2">
               <button
-                onClick={handleEnter}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm sm:text-base"
-              >
-                ENTER
-              </button>
-              <button
                 onClick={handleNewGame}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm sm:text-base"
+                className="flex-1 bg-blue-800 hover:bg-blue-700 text-gray-200 font-semibold py-2 px-4 rounded transition-colors text-sm sm:text-base"
               >
                 New Game
+              </button>
+              <button
+                onClick={handleEnter}
+                className="flex-1 bg-blue-800 hover:bg-blue-700 text-gray-200 font-semibold py-2 px-4 rounded transition-colors text-sm sm:text-base"
+              >
+                ENTER
               </button>
             </div>
           </div>

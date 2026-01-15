@@ -1,4 +1,4 @@
-// Типы для игры Wordle
+// Types for Wordle game
 
 export type LetterState = 'correct' | 'present' | 'absent' | 'empty';
 

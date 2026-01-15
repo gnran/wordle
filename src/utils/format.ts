@@ -1,9 +1,9 @@
 /**
- * Форматирует адрес кошелька в формате 0xXXXX...XXXX
- * @param address - Полный адрес кошелька
- * @param startLength - Количество символов в начале (по умолчанию 6)
- * @param endLength - Количество символов в конце (по умолчанию 4)
- * @returns Отформатированный адрес
+ * Formats wallet address in format 0xXXXX...XXXX
+ * @param address - Full wallet address
+ * @param startLength - Number of characters at start (default 6)
+ * @param endLength - Number of characters at end (default 4)
+ * @returns Formatted address
  */
 export function formatWalletAddress(
   address: string,

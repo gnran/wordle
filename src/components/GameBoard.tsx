@@ -8,7 +8,7 @@ interface GameBoardProps {
 }
 
 /**
- * Компонент игрового поля - отображает сетку 6x5 для угадывания слов
+ * Game board component - displays 6x5 grid for guessing words
  */
 export const GameBoard = ({ rows, currentRow, currentGuess }: GameBoardProps) => {
   return (

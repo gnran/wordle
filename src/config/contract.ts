@@ -1,18 +1,18 @@
 /**
- * Конфигурация смарт-контракта WordleStatsSnapshot
+ * WordleStatsSnapshot smart contract configuration
  * 
- * ВАЖНО: После развертывания контракта обновите CONTRACT_ADDRESS
- * и CONTRACT_CHAIN_ID в соответствии с вашей сетью
+ * IMPORTANT: After deploying contract, update CONTRACT_ADDRESS
+ * and CONTRACT_CHAIN_ID according to your network
  */
 
 // Base Mainnet: 8453
 // Base Sepolia (testnet): 84532
 export const CONTRACT_CHAIN_ID = 8453; // Base Mainnet
 
-// Адрес развернутого контракта
+// Deployed contract address
 export const CONTRACT_ADDRESS = "0xA69227c3A004B99871050EA175aCcC2dF77c204f";
 
-// ABI контракта
+// Contract ABI
 export const CONTRACT_ABI = [
   {
     "inputs": [],

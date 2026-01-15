@@ -1,17 +1,17 @@
-// Словарь из words.json для игры Wordle
+// Dictionary from words.json for Wordle game
 import wordsData from '../../words.json';
 
 export const WORDS = wordsData.words.map((word: string) => word.toUpperCase());
 
-// Все слова для проверки (включая словарь)
+// All words for validation (including dictionary)
 export const VALID_WORDS = [...WORDS];
 
-// Получить случайное слово из словаря
+// Get random word from dictionary
 export const getRandomWord = (): string => {
   return WORDS[Math.floor(Math.random() * WORDS.length)];
 };
 
-// Проверить, является ли слово валидным
+// Check if word is valid
 export const isValidWord = (word: string): boolean => {
   return VALID_WORDS.includes(word.toUpperCase());
 };
