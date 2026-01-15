@@ -7,7 +7,7 @@
     "miniapp": {
       "version": "1",
       "name": "Wordle",
-      "homeUrl": "https://wordle-six-orcin.vercel.app",
+      "homeUrl": "https://wordle-six-orcin.vercel.app/",
       "iconUrl": "",
       "splashImageUrl": "",
       "splashBackgroundColor": "",
