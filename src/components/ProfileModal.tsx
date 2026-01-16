@@ -24,6 +24,7 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
   const [displayStats, setDisplayStats] = useState<UserStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [hasFetchedBlockchain, setHasFetchedBlockchain] = useState(false);
+  const [fetchingWalletAddress, setFetchingWalletAddress] = useState<string | null>(null);
 
   // Fetch fresh stats from blockchain when modal opens (blockchain is source of truth)
   useEffect(() => {
@@ -31,6 +32,7 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
     if (!isOpen) {
       setHasFetchedBlockchain(false);
       setDisplayStats(null);
+      setFetchingWalletAddress(null);
       return;
     }
 
@@ -74,6 +76,7 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
 
           const walletAddress = accounts[0];
           console.log('ProfileModal: Using Farcaster wallet address:', walletAddress);
+          setFetchingWalletAddress(walletAddress); // Store for debugging display
 
           const browserProvider = new BrowserProvider(provider);
           const onchainStats = await getOnchainStats(walletAddress, browserProvider);
@@ -317,6 +320,7 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
 
                       const walletAddress = accounts[0];
                       console.log('ProfileModal: Refreshing stats from blockchain for Farcaster wallet:', walletAddress);
+                      setFetchingWalletAddress(walletAddress); // Store for debugging display
                       const browserProvider = new BrowserProvider(provider);
                       const onchainStats = await getOnchainStats(walletAddress, browserProvider);
                       
@@ -405,6 +409,14 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
                   <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Wallet:</span>
                   <span className="text-xs sm:text-sm font-mono font-semibold text-gray-900 dark:text-white">
                     {formatWalletAddress(userInfo.walletAddress)}
+                  </span>
+                </div>
+              )}
+              {fetchingWalletAddress && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs sm:text-sm text-yellow-600 dark:text-yellow-400">Fetching from:</span>
+                  <span className="text-xs sm:text-sm font-mono font-semibold text-yellow-600 dark:text-yellow-400">
+                    {formatWalletAddress(fetchingWalletAddress)}
                   </span>
                 </div>
               )}
