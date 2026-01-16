@@ -122,6 +122,35 @@ function App() {
                 const currentNonce = await getCurrentNonce(newUserInfo.walletAddress, browserProvider);
                 console.log(`[Nonce] Wallet: ${newUserInfo.walletAddress}`);
                 console.log(`[Nonce] Nonce Value: ${currentNonce}`);
+                
+                // Save nonce to local storage
+                const existingLastSubmitted = loadLastSubmitted(user.fid);
+                if (existingLastSubmitted) {
+                  // Update existing lastSubmitted with new nonce
+                  saveLastSubmitted({
+                    ...existingLastSubmitted,
+                    nonce: currentNonce,
+                  }, user.fid);
+                } else {
+                  // Create minimal entry with just the nonce if no existing data
+                  saveLastSubmitted({
+                    games: 0,
+                    wins: 0,
+                    losses: 0,
+                    nonce: currentNonce,
+                  }, user.fid);
+                }
+                
+                // Load and display the saved nonce from local storage
+                const savedLastSubmitted = loadLastSubmitted(user.fid);
+                if (savedLastSubmitted) {
+                  console.log(`[Nonce] Saved to local storage:`, {
+                    walletAddress: newUserInfo.walletAddress,
+                    nonce: savedLastSubmitted.nonce,
+                    storageKey: `wordle-last-submitted-fid-${user.fid}`,
+                    fullData: savedLastSubmitted
+                  });
+                }
               } catch (nonceError) {
                 console.warn('Failed to fetch nonce:', nonceError);
               }
