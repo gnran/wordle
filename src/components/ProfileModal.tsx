@@ -25,24 +25,26 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
   const [displayStats, setDisplayStats] = useState<UserStats>(stats);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
 
-  // Update displayStats when stats prop changes (but don't override blockchain data if modal is open with wallet)
+  // Fetch fresh stats from blockchain when modal opens (blockchain is source of truth)
   useEffect(() => {
-    if (!isOpen || !userInfo?.walletAddress) {
+    if (!isOpen) {
+      // Reset to stats prop when modal closes
       setDisplayStats(stats);
+      return;
     }
-    // If modal is open with wallet, blockchain fetch will handle updating displayStats
-  }, [stats, isOpen, userInfo?.walletAddress]);
 
-  // Fetch fresh stats from blockchain when modal opens
-  useEffect(() => {
-    if (isOpen && userInfo?.walletAddress && userInfo?.fid) {
+    // If wallet is available, always fetch from blockchain
+    if (userInfo?.walletAddress && userInfo?.fid) {
       setIsLoadingStats(true);
       const fetchBlockchainStats = async () => {
         try {
+          console.log('ProfileModal: Fetching stats from blockchain for', userInfo.walletAddress);
           const provider = await sdk.wallet.getEthereumProvider();
           if (provider) {
             const browserProvider = new BrowserProvider(provider);
             const onchainStats = await getOnchainStats(userInfo.walletAddress!, browserProvider);
+            
+            console.log('ProfileModal: Blockchain stats received:', onchainStats);
             
             if (onchainStats) {
               // Get local stats to preserve streaks
@@ -58,6 +60,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
                 maxStreak: localStats.maxStreak,
               };
               
+              console.log('ProfileModal: Synced stats (blockchain + local streaks):', syncedStats);
               setDisplayStats(syncedStats);
               
               // Update parent component
@@ -68,15 +71,17 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
               // Update local storage
               saveStats(syncedStats, userInfo.fid);
             } else {
-              // Blockchain fetch failed, use provided stats
+              // Blockchain fetch returned null (no data on chain or error), use provided stats
+              console.warn('ProfileModal: No blockchain stats found, using local stats');
               setDisplayStats(stats);
             }
           } else {
             // No provider, use provided stats
+            console.warn('ProfileModal: No provider available, using local stats');
             setDisplayStats(stats);
           }
         } catch (error) {
-          console.error('Error fetching blockchain stats:', error);
+          console.error('ProfileModal: Error fetching blockchain stats:', error);
           // On error, use provided stats
           setDisplayStats(stats);
         } finally {
@@ -85,8 +90,12 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
       };
       
       fetchBlockchainStats();
+    } else {
+      // No wallet, use provided stats
+      console.log('ProfileModal: No wallet connected, using local stats');
+      setDisplayStats(stats);
     }
-  }, [isOpen, userInfo?.walletAddress, userInfo?.fid, onStatsUpdate]);
+  }, [isOpen, userInfo?.walletAddress, userInfo?.fid, onStatsUpdate, stats]);
 
   if (!isOpen) return null;
 
