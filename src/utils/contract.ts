@@ -155,18 +155,35 @@ export async function switchToBaseNetwork(
 
 /**
  * Get current nonce from contract
+ * Uses direct RPC provider for read operations (same logic as working script)
  */
 export async function getCurrentNonce(
-  playerAddress: string,
-  provider: BrowserProvider
+  playerAddress: string
 ): Promise<number> {
   try {
-    const contract = await getContract(provider);
+    console.log(`Fetching nonce for wallet: ${playerAddress}`);
+    console.log(`Contract address: ${CONTRACT_ADDRESS}`);
+    console.log(`Network: Base Mainnet (${CONTRACT_CHAIN_ID})`);
+    
+    const rpcUrl = getRpcUrl();
+    console.log(`RPC URL: ${rpcUrl}`);
+    
+    // Use JsonRpcProvider directly (same as working script)
+    const provider = new JsonRpcProvider(rpcUrl);
+    const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+    
     const nonce = await contract.getNonce(playerAddress);
-    return Number(nonce);
+    const nonceValue = Number(nonce);
+    
+    console.log(`\n--- Nonce Result ---`);
+    console.log(`Wallet Address: ${playerAddress}`);
+    console.log(`Nonce Value: ${nonceValue}`);
+    console.log(`Nonce (raw): ${nonce.toString()}`);
+    
+    return nonceValue;
   } catch (error) {
     console.error('Error getting nonce:', error);
-    return 0;
+    throw error;
   }
 }
 
@@ -208,7 +225,7 @@ export async function submitStatsOnchain(
     let lastSubmitted = loadLastSubmitted(fid);
 
     // Get current nonce from contract
-    let currentNonce = await getCurrentNonce(walletAddress, provider);
+    let currentNonce = await getCurrentNonce(walletAddress);
 
     // If lastSubmitted is missing but contract already has data (nonce > 0),
     // need to sync: get statistics from contract
@@ -267,7 +284,7 @@ export async function submitStatsOnchain(
         }
         
         // Re-check nonce after sync
-        const recheckNonce = await getCurrentNonce(walletAddress, provider);
+        const recheckNonce = await getCurrentNonce(walletAddress);
         if (recheckNonce !== expectedNonce) {
           return {
             success: false,
@@ -321,7 +338,7 @@ export async function submitStatsOnchain(
     }
 
     // Final nonce check right before submission to prevent race conditions
-    const finalNonceCheck = await getCurrentNonce(walletAddress, provider);
+    const finalNonceCheck = await getCurrentNonce(walletAddress);
     if (finalNonceCheck !== expectedNonce) {
       console.warn(`Nonce changed before submission. Expected: ${expectedNonce}, Got: ${finalNonceCheck}. Re-syncing...`);
       
@@ -350,7 +367,7 @@ export async function submitStatsOnchain(
         }
         
         // Verify nonce matches after sync
-        const recheckNonce = await getCurrentNonce(walletAddress, provider);
+        const recheckNonce = await getCurrentNonce(walletAddress);
         if (recheckNonce !== expectedNonce) {
           return {
             success: false,
@@ -524,14 +541,14 @@ export async function submitStatsOnchain(
       console.log('Transaction successfully confirmed:', receipt.hash);
       
       // Check that nonce actually increased
-      const newNonce = await getCurrentNonce(walletAddress, provider);
+      const newNonce = await getCurrentNonce(walletAddress);
       console.log('Nonce after transaction:', newNonce, 'Expected:', expectedNonce + 1);
       
       if (newNonce !== expectedNonce + 1) {
         console.warn('Nonce did not increase after transaction. Expected:', expectedNonce + 1, 'Got:', newNonce);
         // Wait a bit and check again (may be delay)
         await new Promise(resolve => setTimeout(resolve, 2000));
-        const retryNonce = await getCurrentNonce(walletAddress, provider);
+        const retryNonce = await getCurrentNonce(walletAddress);
         console.log('Nonce after retry check:', retryNonce);
       }
 

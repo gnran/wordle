@@ -117,9 +117,9 @@ function App() {
             if (provider) {
               const browserProvider = new BrowserProvider(provider);
               
-              // Fetch nonce directly using getCurrentNonce (same logic as script)
+              // Fetch nonce directly using getCurrentNonce (same logic as working script)
               try {
-                const currentNonce = await getCurrentNonce(newUserInfo.walletAddress, browserProvider);
+                const currentNonce = await getCurrentNonce(newUserInfo.walletAddress);
                 console.log(`[Nonce] Wallet: ${newUserInfo.walletAddress}`);
                 console.log(`[Nonce] Nonce Value: ${currentNonce}`);
                 
