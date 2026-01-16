@@ -208,7 +208,7 @@ export async function submitStatsOnchain(
     let lastSubmitted = loadLastSubmitted(fid);
 
     // Get current nonce from contract
-    const currentNonce = await getCurrentNonce(walletAddress, provider);
+    let currentNonce = await getCurrentNonce(walletAddress, provider);
 
     // If lastSubmitted is missing but contract already has data (nonce > 0),
     // need to sync: get statistics from contract
@@ -227,30 +227,71 @@ export async function submitStatsOnchain(
     }
 
     // Calculate delta
-    const { deltaWins, deltaLosses, expectedNonce } = calculateDelta(
+    let { deltaWins, deltaLosses, expectedNonce } = calculateDelta(
       localStats,
       lastSubmitted
     );
 
     // Validate delta
-    const validation = validateDelta(deltaWins, deltaLosses);
+    let validation = validateDelta(deltaWins, deltaLosses);
     if (!validation.valid) {
       return { success: false, error: validation.error };
     }
 
-    // Check nonce match
+    // Check nonce match - if mismatch, sync with contract and recalculate
     if (currentNonce !== expectedNonce) {
-      // If nonce doesn't match but there's data in contract, suggest sync
-      if (currentNonce > 0 && !lastSubmitted) {
+      console.warn(`Nonce mismatch detected. Expected: ${expectedNonce}, Contract has: ${currentNonce}. Syncing with contract...`);
+      
+      // Get actual stats from contract to sync
+      const onchainStats = await getOnchainStats(walletAddress, provider);
+      if (onchainStats) {
+        // Update lastSubmitted with contract's actual state
+        lastSubmitted = {
+          games: onchainStats.totalGames,
+          wins: onchainStats.wins,
+          losses: onchainStats.losses,
+          nonce: onchainStats.nonce,
+        };
+        saveLastSubmitted(lastSubmitted, fid);
+        
+        // Recalculate delta with synced data
+        const recalculated = calculateDelta(localStats, lastSubmitted);
+        deltaWins = recalculated.deltaWins;
+        deltaLosses = recalculated.deltaLosses;
+        expectedNonce = recalculated.expectedNonce;
+        
+        // Validate the new delta
+        validation = validateDelta(deltaWins, deltaLosses);
+        if (!validation.valid) {
+          return { success: false, error: validation.error || 'Nothing to submit after sync' };
+        }
+        
+        // Re-check nonce after sync
+        const recheckNonce = await getCurrentNonce(walletAddress, provider);
+        if (recheckNonce !== expectedNonce) {
+          return {
+            success: false,
+            error: `Nonce still mismatched after sync. Expected ${expectedNonce}, got ${recheckNonce}. Please try again.`,
+          };
+        }
+        
+        // Update currentNonce to match expectedNonce for consistency
+        currentNonce = recheckNonce;
+        
+        console.log('Successfully synced with contract. Proceeding with submission...');
+      } else {
+        // Couldn't get stats from contract - might be a new user or network issue
+        if (currentNonce > 0 && !lastSubmitted) {
+          return {
+            success: false,
+            error: `Statistics found in blockchain but couldn't load them. Please refresh page and try again.`,
+          };
+        }
         return {
           success: false,
-          error: `Statistics found in blockchain. Refresh page to sync.`,
+          error: `Nonce mismatch. Expected ${expectedNonce}, got ${currentNonce}. Could not sync with contract. Please refresh page and try again.`,
         };
       }
-      return {
-        success: false,
-        error: `Nonce mismatch. Expected ${expectedNonce}, got ${currentNonce}. Refresh page and try again.`,
-      };
     }
 
     // Re-check network one more time before contract interaction
