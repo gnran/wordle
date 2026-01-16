@@ -1,7 +1,7 @@
 import { BrowserProvider, Contract, Signer, JsonRpcProvider } from 'ethers';
 import { CONTRACT_ADDRESS, CONTRACT_ABI, CONTRACT_CHAIN_ID } from '../config/contract';
 import { UserStats, LastSubmitted } from '../types';
-import { loadLastSubmitted, saveLastSubmitted } from './storage';
+import { loadLastSubmitted, saveLastSubmitted, saveStats } from './storage';
 
 /**
  * Calculate delta between local statistics and last submitted
@@ -568,6 +568,17 @@ export async function submitStatsOnchain(
         timestamp: Date.now(),
       };
       saveLastSubmitted(newLastSubmitted, fid);
+
+      // Reset stats in local storage to zero after successful transaction
+      const zeroStats: UserStats = {
+        totalGames: 0,
+        wins: 0,
+        losses: 0,
+        winPercentage: 0,
+        currentStreak: 0,
+        maxStreak: 0,
+      };
+      saveStats(zeroStats, fid);
 
       return {
         success: true,

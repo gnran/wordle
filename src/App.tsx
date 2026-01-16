@@ -428,31 +428,18 @@ function App() {
       // If user cancels, local stats remain updated (already saved)
       const result = await submitStatsOnchain(statsToSubmit, currentUserInfo.walletAddress, browserProvider, currentUserInfo.fid);
       
-      // If submission was successful, reload stats from blockchain to ensure sync
+      // If submission was successful, reset stats to zero
       if (result.success) {
-        try {
-          const onchainStats = await getOnchainStats(currentUserInfo.walletAddress, browserProvider);
-          if (onchainStats) {
-            // Get current local stats to preserve streaks
-            const localStats = loadStats(currentUserInfo.fid);
-            
-            // Update with blockchain data (source of truth) but keep streaks
-            const syncedStats: UserStats = {
-              totalGames: onchainStats.totalGames,
-              wins: onchainStats.wins,
-              losses: onchainStats.losses,
-              winPercentage: onchainStats.winPercentage,
-              currentStreak: localStats.currentStreak,
-              maxStreak: localStats.maxStreak,
-            };
-            
-            setStats(syncedStats);
-            saveStats(syncedStats, currentUserInfo.fid);
-          }
-        } catch (reloadError) {
-          console.error('Error reloading stats from blockchain:', reloadError);
-          // Continue with local stats if reload fails
-        }
+        const zeroStats: UserStats = {
+          totalGames: 0,
+          wins: 0,
+          losses: 0,
+          winPercentage: 0,
+          currentStreak: 0,
+          maxStreak: 0,
+        };
+        setStats(zeroStats);
+        saveStats(zeroStats, currentUserInfo.fid);
       }
     } catch (error) {
       // Silently handle errors - local stats are already updated
