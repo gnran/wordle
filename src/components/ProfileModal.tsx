@@ -5,7 +5,7 @@ import { formatWalletAddress } from '../utils/format';
 import { submitStatsOnchain, getOnchainStats } from '../utils/contract';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { BrowserProvider } from 'ethers';
-import { loadStats, saveStats } from '../utils/storage';
+// Removed loadStats and saveStats - ProfileModal uses ONLY blockchain data
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -35,8 +35,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
       return;
     }
 
-    // Initialize with stats prop while loading (if not already set)
-    setDisplayStats(prev => prev === null ? stats : prev);
+    // Don't initialize with stats prop - wait for blockchain data
 
     // Only fetch once when modal opens (don't refetch if already fetched)
     if (hasFetchedBlockchain) {
@@ -63,44 +62,34 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
           console.log('ProfileModal: Blockchain stats received:', onchainStats);
           
           if (onchainStats) {
-            // Get local stats to preserve streaks
-            const localStats = loadStats(userInfo.fid);
-            
-            // Merge blockchain stats (source of truth) with local streaks
-            const syncedStats: UserStats = {
+            // Use ONLY blockchain data - no local storage, no streaks
+            const blockchainOnlyStats: UserStats = {
               totalGames: onchainStats.totalGames,
               wins: onchainStats.wins,
               losses: onchainStats.losses,
               winPercentage: onchainStats.winPercentage,
-              currentStreak: localStats.currentStreak,
-              maxStreak: localStats.maxStreak,
+              currentStreak: 0, // Not stored on blockchain
+              maxStreak: 0, // Not stored on blockchain
             };
             
-            console.log('ProfileModal: Synced stats (blockchain + local streaks):', syncedStats);
-            console.log('ProfileModal: Setting displayStats to blockchain data:', syncedStats.totalGames, 'games');
-            setDisplayStats(syncedStats);
+            console.log('ProfileModal: Using ONLY blockchain data:', blockchainOnlyStats);
+            console.log('ProfileModal: Setting displayStats to blockchain data:', blockchainOnlyStats.totalGames, 'games');
+            setDisplayStats(blockchainOnlyStats);
             
             // Update parent component
             if (onStatsUpdate) {
-              onStatsUpdate(syncedStats);
+              onStatsUpdate(blockchainOnlyStats);
             }
-            
-            // Update local storage
-            saveStats(syncedStats, userInfo.fid);
           } else {
-            // Blockchain fetch returned null - try to use stats prop as fallback
+            // Blockchain fetch returned null - show error, don't use fallback
             console.warn('ProfileModal: No blockchain stats found (returned null)');
             console.warn('ProfileModal: This might mean: 1) No data on chain, 2) Wrong network, 3) Contract error');
-            console.warn('ProfileModal: Using stats prop as fallback:', stats);
-            // Use stats prop as fallback if blockchain fetch fails
-            setDisplayStats(stats);
+            // Keep displayStats as null to show "No stats available"
           }
         } catch (error) {
           console.error('ProfileModal: Error fetching blockchain stats:', error);
           console.error('ProfileModal: Error details:', error);
-          // On error, use stats prop as fallback
-          console.warn('ProfileModal: Using stats prop as fallback due to error');
-          setDisplayStats(stats);
+          // Keep displayStats as null on error - don't use fallback
         } finally {
           setIsLoadingStats(false);
         }
@@ -108,9 +97,9 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
       
       fetchBlockchainStats();
     } else {
-      // No wallet, use provided stats as fallback
-      console.log('ProfileModal: No wallet connected, using local stats');
-      setDisplayStats(stats);
+      // No wallet - show message that wallet is needed
+      console.log('ProfileModal: No wallet connected - blockchain data required');
+      setDisplayStats(null);
       setHasFetchedBlockchain(true); // Mark as fetched to prevent re-running
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -148,29 +137,25 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
         const txHash = result.txHash;
         const txLink = `https://basescan.org/tx/${txHash}`;
         
-        // Reload stats from blockchain after successful submission
+        // Reload stats from blockchain after successful submission (ONLY blockchain data)
         try {
           const onchainStats = await getOnchainStats(userInfo.walletAddress, browserProvider);
-          if (onchainStats && userInfo.fid) {
-            // Get local stats to preserve streaks
-            const localStats = loadStats(userInfo.fid);
-            
-            // Merge blockchain stats (source of truth) with local streaks
-            const syncedStats: UserStats = {
+          if (onchainStats) {
+            // Use ONLY blockchain data - no local storage
+            const blockchainOnlyStats: UserStats = {
               totalGames: onchainStats.totalGames,
               wins: onchainStats.wins,
               losses: onchainStats.losses,
               winPercentage: onchainStats.winPercentage,
-              currentStreak: localStats.currentStreak,
-              maxStreak: localStats.maxStreak,
+              currentStreak: 0, // Not stored on blockchain
+              maxStreak: 0, // Not stored on blockchain
             };
             
-            setDisplayStats(syncedStats);
-            saveStats(syncedStats, userInfo.fid);
+            setDisplayStats(blockchainOnlyStats);
             
             // Notify parent component to update stats
             if (onStatsUpdate) {
-              onStatsUpdate(syncedStats);
+              onStatsUpdate(blockchainOnlyStats);
             }
           }
         } catch (reloadError) {
@@ -275,28 +260,27 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
                       console.log('ProfileModal: Refresh - Blockchain stats received:', onchainStats);
                       
                       if (onchainStats) {
-                        const localStats = loadStats(userInfo.fid);
-                        const syncedStats: UserStats = {
+                        // Use ONLY blockchain data - no local storage
+                        const blockchainOnlyStats: UserStats = {
                           totalGames: onchainStats.totalGames,
                           wins: onchainStats.wins,
                           losses: onchainStats.losses,
                           winPercentage: onchainStats.winPercentage,
-                          currentStreak: localStats.currentStreak,
-                          maxStreak: localStats.maxStreak,
+                          currentStreak: 0, // Not stored on blockchain
+                          maxStreak: 0, // Not stored on blockchain
                         };
-                        console.log('ProfileModal: Refresh - Setting displayStats to:', syncedStats);
-                        setDisplayStats(syncedStats);
+                        console.log('ProfileModal: Refresh - Setting displayStats to blockchain data:', blockchainOnlyStats);
+                        setDisplayStats(blockchainOnlyStats);
                         if (onStatsUpdate) {
-                          onStatsUpdate(syncedStats);
+                          onStatsUpdate(blockchainOnlyStats);
                         }
-                        saveStats(syncedStats, userInfo.fid);
                       } else {
-                        console.warn('ProfileModal: Refresh - No blockchain stats found, using stats prop');
-                        setDisplayStats(stats);
+                        console.warn('ProfileModal: Refresh - No blockchain stats found');
+                        // Keep displayStats as null - don't use fallback
                       }
                     } catch (error) {
                       console.error('ProfileModal: Error refreshing stats:', error);
-                      setDisplayStats(stats);
+                      // Keep displayStats as null on error - don't use fallback
                     } finally {
                       setIsLoadingStats(false);
                       setHasFetchedBlockchain(true);
