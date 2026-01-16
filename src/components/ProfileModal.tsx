@@ -31,8 +31,12 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
     // Reset flag when modal closes
     if (!isOpen) {
       setHasFetchedBlockchain(false);
+      setDisplayStats(null);
       return;
     }
+
+    // Initialize with stats prop while loading (if not already set)
+    setDisplayStats(prev => prev === null ? stats : prev);
 
     // Only fetch once when modal opens (don't refetch if already fetched)
     if (hasFetchedBlockchain) {
@@ -84,14 +88,19 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
             // Update local storage
             saveStats(syncedStats, userInfo.fid);
           } else {
-            // Blockchain fetch returned null (no data on chain or error)
+            // Blockchain fetch returned null - try to use stats prop as fallback
             console.warn('ProfileModal: No blockchain stats found (returned null)');
             console.warn('ProfileModal: This might mean: 1) No data on chain, 2) Wrong network, 3) Contract error');
-            // Don't update displayStats - keep current value or show error
-            // The stats prop might have wrong data, so we don't want to use it
+            console.warn('ProfileModal: Using stats prop as fallback:', stats);
+            // Use stats prop as fallback if blockchain fetch fails
+            setDisplayStats(stats);
           }
         } catch (error) {
           console.error('ProfileModal: Error fetching blockchain stats:', error);
+          console.error('ProfileModal: Error details:', error);
+          // On error, use stats prop as fallback
+          console.warn('ProfileModal: Using stats prop as fallback due to error');
+          setDisplayStats(stats);
         } finally {
           setIsLoadingStats(false);
         }
@@ -241,34 +250,53 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
             {userInfo?.walletAddress && (
               <button
                 onClick={() => {
+                  console.log('ProfileModal: Manual refresh triggered');
                   setHasFetchedBlockchain(false);
                   setIsLoadingStats(true);
                   const fetchBlockchainStats = async () => {
                     try {
                       const provider = await sdk.wallet.getEthereumProvider();
-                      if (provider && userInfo?.walletAddress && userInfo?.fid) {
-                        const browserProvider = new BrowserProvider(provider);
-                        const onchainStats = await getOnchainStats(userInfo.walletAddress, browserProvider);
-                        
-                        if (onchainStats) {
-                          const localStats = loadStats(userInfo.fid);
-                          const syncedStats: UserStats = {
-                            totalGames: onchainStats.totalGames,
-                            wins: onchainStats.wins,
-                            losses: onchainStats.losses,
-                            winPercentage: onchainStats.winPercentage,
-                            currentStreak: localStats.currentStreak,
-                            maxStreak: localStats.maxStreak,
-                          };
-                          setDisplayStats(syncedStats);
-                          if (onStatsUpdate) {
-                            onStatsUpdate(syncedStats);
-                          }
-                          saveStats(syncedStats, userInfo.fid);
+                      if (!provider) {
+                        console.warn('ProfileModal: No provider available for refresh');
+                        setIsLoadingStats(false);
+                        return;
+                      }
+                      
+                      if (!userInfo?.walletAddress || !userInfo?.fid) {
+                        console.warn('ProfileModal: Missing wallet address or FID');
+                        setIsLoadingStats(false);
+                        return;
+                      }
+                      
+                      console.log('ProfileModal: Refreshing stats from blockchain for', userInfo.walletAddress);
+                      const browserProvider = new BrowserProvider(provider);
+                      const onchainStats = await getOnchainStats(userInfo.walletAddress, browserProvider);
+                      
+                      console.log('ProfileModal: Refresh - Blockchain stats received:', onchainStats);
+                      
+                      if (onchainStats) {
+                        const localStats = loadStats(userInfo.fid);
+                        const syncedStats: UserStats = {
+                          totalGames: onchainStats.totalGames,
+                          wins: onchainStats.wins,
+                          losses: onchainStats.losses,
+                          winPercentage: onchainStats.winPercentage,
+                          currentStreak: localStats.currentStreak,
+                          maxStreak: localStats.maxStreak,
+                        };
+                        console.log('ProfileModal: Refresh - Setting displayStats to:', syncedStats);
+                        setDisplayStats(syncedStats);
+                        if (onStatsUpdate) {
+                          onStatsUpdate(syncedStats);
                         }
+                        saveStats(syncedStats, userInfo.fid);
+                      } else {
+                        console.warn('ProfileModal: Refresh - No blockchain stats found, using stats prop');
+                        setDisplayStats(stats);
                       }
                     } catch (error) {
-                      console.error('Error refreshing stats:', error);
+                      console.error('ProfileModal: Error refreshing stats:', error);
+                      setDisplayStats(stats);
                     } finally {
                       setIsLoadingStats(false);
                       setHasFetchedBlockchain(true);

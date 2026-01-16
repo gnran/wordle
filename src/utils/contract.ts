@@ -513,18 +513,27 @@ export async function getOnchainStats(
   nonce: number;
 } | null> {
   try {
+    console.log('getOnchainStats: Fetching stats for address:', playerAddress);
+    
     // Check network first
     const networkCheck = await checkNetwork(provider);
     if (!networkCheck.correct) {
-      console.warn('Wrong network for loading stats:', networkCheck.error);
+      console.warn('getOnchainStats: Wrong network for loading stats:', networkCheck.error);
+      console.warn('getOnchainStats: Expected network:', CONTRACT_CHAIN_ID, 'Got:', networkCheck.chainId);
       return null;
     }
 
+    console.log('getOnchainStats: Network check passed, getting contract...');
     const contract = await getContract(provider);
+    console.log('getOnchainStats: Contract obtained, calling getStats for:', playerAddress);
+    
     const stats = await contract.getStats(playerAddress);
+    console.log('getOnchainStats: Raw stats from contract:', stats);
+    
     const winPercentage = await contract.getWinPercentage(playerAddress);
+    console.log('getOnchainStats: Win percentage:', winPercentage);
 
-    return {
+    const result = {
       totalGames: Number(stats.totalGames),
       wins: Number(stats.wins),
       losses: Number(stats.losses),
@@ -532,8 +541,14 @@ export async function getOnchainStats(
       lastUpdated: Number(stats.lastUpdated),
       nonce: Number(stats.nonce),
     };
-  } catch (error) {
-    console.error('Error getting statistics from blockchain:', error);
+    
+    console.log('getOnchainStats: Processed stats:', result);
+    return result;
+  } catch (error: any) {
+    console.error('getOnchainStats: Error getting statistics from blockchain:', error);
+    console.error('getOnchainStats: Error message:', error?.message);
+    console.error('getOnchainStats: Error code:', error?.code);
+    console.error('getOnchainStats: Error details:', error);
     return null;
   }
 }
