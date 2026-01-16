@@ -5,7 +5,7 @@ import { GameState, UserStats, Letter, LetterState, UserInfo } from './types';
 import { getRandomWord, isValidWord } from './data/words';
 import { evaluateGuess, wordToLetters } from './utils/gameLogic';
 import { saveGameState, loadGameState, saveStats, loadStats, saveLastPlayedDate, resetStats, clearGameState, migrateLegacyStats, saveLastSubmitted, loadLastSubmitted } from './utils/storage';
-import { submitStatsOnchain, getOnchainStats } from './utils/contract';
+import { submitStatsOnchain, getOnchainStats, getCurrentNonce } from './utils/contract';
 import { GameBoard } from './components/GameBoard';
 import { Keyboard } from './components/Keyboard';
 import { StatsModal } from './components/StatsModal';
@@ -116,6 +116,16 @@ function App() {
             const provider = await sdk.wallet.getEthereumProvider();
             if (provider) {
               const browserProvider = new BrowserProvider(provider);
+              
+              // Fetch nonce directly using getCurrentNonce (same logic as script)
+              try {
+                const currentNonce = await getCurrentNonce(newUserInfo.walletAddress, browserProvider);
+                console.log(`[Nonce] Wallet: ${newUserInfo.walletAddress}`);
+                console.log(`[Nonce] Nonce Value: ${currentNonce}`);
+              } catch (nonceError) {
+                console.warn('Failed to fetch nonce:', nonceError);
+              }
+              
               const onchainStats = await getOnchainStats(newUserInfo.walletAddress, browserProvider);
               
               if (onchainStats) {
