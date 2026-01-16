@@ -11,13 +11,14 @@ interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   userInfo: UserInfo | null;
+  localStats: UserStats | null;
   onStatsUpdate?: (stats: UserStats) => void;
 }
 
 /**
  * Profile modal with statistics (fetches from blockchain only)
  */
-export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: ProfileModalProps) => {
+export const ProfileModal = ({ isOpen, onClose, userInfo, localStats, onStatsUpdate }: ProfileModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | React.ReactNode | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | React.ReactNode | null>(null);
@@ -171,7 +172,7 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
       console.log('ProfileModal: Submitting stats using Farcaster wallet:', walletAddress);
 
       const browserProvider = new BrowserProvider(provider);
-      if (!displayStats) {
+      if (!localStats) {
         setSubmitError('No stats available to submit');
         setIsSubmitting(false);
         return;
@@ -183,7 +184,7 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
         return;
       }
       
-      const result = await submitStatsOnchain(displayStats, walletAddress, browserProvider, userInfo.fid);
+      const result = await submitStatsOnchain(localStats, walletAddress, browserProvider, userInfo.fid);
 
       if (result.success && result.txHash) {
         const txHash = result.txHash;
