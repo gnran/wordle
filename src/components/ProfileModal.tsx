@@ -168,6 +168,13 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
         setIsSubmitting(false);
         return;
       }
+      
+      if (!userInfo?.fid) {
+        setSubmitError('User information not available');
+        setIsSubmitting(false);
+        return;
+      }
+      
       const result = await submitStatsOnchain(displayStats, walletAddress, browserProvider, userInfo.fid);
 
       if (result.success && result.txHash) {
