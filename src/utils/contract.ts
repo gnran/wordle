@@ -320,6 +320,53 @@ export async function submitStatsOnchain(
       };
     }
 
+    // Final nonce check right before submission to prevent race conditions
+    const finalNonceCheck = await getCurrentNonce(walletAddress, provider);
+    if (finalNonceCheck !== expectedNonce) {
+      console.warn(`Nonce changed before submission. Expected: ${expectedNonce}, Got: ${finalNonceCheck}. Re-syncing...`);
+      
+      // Get actual stats from contract to sync
+      const onchainStats = await getOnchainStats(walletAddress, provider);
+      if (onchainStats) {
+        // Update lastSubmitted with contract's actual state
+        lastSubmitted = {
+          games: onchainStats.totalGames,
+          wins: onchainStats.wins,
+          losses: onchainStats.losses,
+          nonce: onchainStats.nonce,
+        };
+        saveLastSubmitted(lastSubmitted, fid);
+        
+        // Recalculate delta with synced data
+        const recalculated = calculateDelta(localStats, lastSubmitted);
+        deltaWins = recalculated.deltaWins;
+        deltaLosses = recalculated.deltaLosses;
+        expectedNonce = recalculated.expectedNonce;
+        
+        // Validate the new delta
+        validation = validateDelta(deltaWins, deltaLosses);
+        if (!validation.valid) {
+          return { success: false, error: validation.error || 'Nothing to submit after re-sync' };
+        }
+        
+        // Verify nonce matches after sync
+        const recheckNonce = await getCurrentNonce(walletAddress, provider);
+        if (recheckNonce !== expectedNonce) {
+          return {
+            success: false,
+            error: `Nonce still mismatched after re-sync. Expected ${expectedNonce}, got ${recheckNonce}. Please try again.`,
+          };
+        }
+        
+        console.log('Re-synced successfully. Proceeding with submission...');
+      } else {
+        return {
+          success: false,
+          error: `Nonce changed before submission but couldn't sync. Expected ${expectedNonce}, got ${finalNonceCheck}. Please try again.`,
+        };
+      }
+    }
+
     // Log parameters for debugging
     console.log('Submitting transaction:', {
       deltaWins,
@@ -339,8 +386,50 @@ export async function submitStatsOnchain(
       console.log('Gas estimate:', gasEstimate.toString());
     } catch (estimateError: any) {
       console.error('Gas estimation error:', estimateError);
-      // If estimation failed, use default value
-      gasEstimate = BigInt(100000);
+      
+      // Check if estimation failed due to INVALID_NONCE
+      const errorMessage = estimateError?.message || String(estimateError);
+      if (errorMessage?.includes('INVALID_NONCE') || errorMessage?.includes('execution reverted: INVALID_NONCE')) {
+        // Nonce changed during gas estimation - need to sync and retry
+        const onchainStats = await getOnchainStats(walletAddress, provider);
+        if (onchainStats) {
+          lastSubmitted = {
+            games: onchainStats.totalGames,
+            wins: onchainStats.wins,
+            losses: onchainStats.losses,
+            nonce: onchainStats.nonce,
+          };
+          saveLastSubmitted(lastSubmitted, fid);
+          
+          const recalculated = calculateDelta(localStats, lastSubmitted);
+          deltaWins = recalculated.deltaWins;
+          deltaLosses = recalculated.deltaLosses;
+          expectedNonce = recalculated.expectedNonce;
+          
+          validation = validateDelta(deltaWins, deltaLosses);
+          if (!validation.valid) {
+            return { success: false, error: validation.error || 'Nothing to submit after sync' };
+          }
+          
+          // Retry gas estimation with updated nonce
+          try {
+            gasEstimate = await contract.submitStatsSnapshot.estimateGas(
+              deltaWins,
+              deltaLosses,
+              expectedNonce
+            );
+            console.log('Gas estimate after sync:', gasEstimate.toString());
+          } catch (retryError: any) {
+            console.error('Gas estimation error after sync:', retryError);
+            gasEstimate = BigInt(100000);
+          }
+        } else {
+          gasEstimate = BigInt(100000);
+        }
+      } else {
+        // If estimation failed for other reasons, use default value
+        gasEstimate = BigInt(100000);
+      }
     }
 
     // Send transaction
@@ -377,9 +466,37 @@ export async function submitStatsOnchain(
       // Check if transaction was executed (revert)
       if (waitError.receipt) {
         // Transaction was included in block but reverted
+        const errorMessage = waitError?.message || String(waitError);
+        
+        // Check for specific revert reasons
+        if (errorMessage?.includes('INVALID_NONCE') || errorMessage?.includes('execution reverted: INVALID_NONCE')) {
+          // Nonce was invalid - sync and suggest retry
+          try {
+            const onchainStats = await getOnchainStats(walletAddress, provider);
+            if (onchainStats) {
+              const syncedLastSubmitted = {
+                games: onchainStats.totalGames,
+                wins: onchainStats.wins,
+                losses: onchainStats.losses,
+                nonce: onchainStats.nonce,
+              };
+              saveLastSubmitted(syncedLastSubmitted, fid);
+            }
+          } catch (syncError) {
+            console.error('Error syncing after INVALID_NONCE:', syncError);
+          }
+          
+          return {
+            success: false,
+            error: 'Transaction failed: Invalid nonce. Local state has been synced. Please try submitting again.',
+            txHash: waitError.receipt?.hash || txHash,
+          };
+        }
+        
         return {
           success: false,
           error: 'Transaction rejected by contract. Check transaction in blockchain.',
+          txHash: waitError.receipt?.hash || txHash,
         };
       }
       
@@ -467,11 +584,31 @@ export async function submitStatsOnchain(
     const errorMessage = error?.message || error?.error?.message || String(error);
     const errorCode = error?.code || error?.error?.code;
 
-    // Handle contract errors
-    if (errorMessage?.includes('INVALID_NONCE')) {
+    // Handle contract errors - INVALID_NONCE
+    if (errorMessage?.includes('INVALID_NONCE') || errorMessage?.includes('execution reverted: INVALID_NONCE')) {
+      // Try to sync with contract before returning error
+      try {
+        const onchainStats = await getOnchainStats(walletAddress, provider);
+        if (onchainStats) {
+          const syncedLastSubmitted = {
+            games: onchainStats.totalGames,
+            wins: onchainStats.wins,
+            losses: onchainStats.losses,
+            nonce: onchainStats.nonce,
+          };
+          saveLastSubmitted(syncedLastSubmitted, fid);
+          return {
+            success: false,
+            error: 'Invalid nonce detected. Local state has been synced with blockchain. Please try submitting again.',
+          };
+        }
+      } catch (syncError) {
+        console.error('Error syncing after INVALID_NONCE:', syncError);
+      }
+      
       return {
         success: false,
-        error: 'Invalid nonce. Refresh page and try again.',
+        error: 'Invalid nonce. Please refresh the page and try again.',
       };
     }
     if (errorMessage?.includes('NOTHING_TO_SUBMIT')) {
@@ -510,11 +647,31 @@ export async function submitStatsOnchain(
 
     // Handle contract errors (revert)
     if (errorMessage?.includes('revert') || errorMessage?.includes('execution reverted')) {
-      const revertReason = errorMessage.match(/revert\s+(.+)/i)?.[1] || '';
+      const revertReason = errorMessage.match(/revert\s+(.+)/i)?.[1] || errorMessage.match(/execution reverted:\s*(.+)/i)?.[1] || '';
       if (revertReason.includes('INVALID_NONCE')) {
+        // Try to sync with contract before returning error
+        try {
+          const onchainStats = await getOnchainStats(walletAddress, provider);
+          if (onchainStats) {
+            const syncedLastSubmitted = {
+              games: onchainStats.totalGames,
+              wins: onchainStats.wins,
+              losses: onchainStats.losses,
+              nonce: onchainStats.nonce,
+            };
+            saveLastSubmitted(syncedLastSubmitted, fid);
+            return {
+              success: false,
+              error: 'Invalid nonce detected. Local state has been synced with blockchain. Please try submitting again.',
+            };
+          }
+        } catch (syncError) {
+          console.error('Error syncing after INVALID_NONCE:', syncError);
+        }
+        
         return {
           success: false,
-          error: 'Invalid nonce. Refresh page and try again.',
+          error: 'Invalid nonce. Please refresh the page and try again.',
         };
       }
       return {
