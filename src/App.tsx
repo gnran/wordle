@@ -3,7 +3,7 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { GameState, UserStats, Letter, LetterState, UserInfo } from './types';
 import { getRandomWord, isValidWord } from './data/words';
 import { evaluateGuess, wordToLetters } from './utils/gameLogic';
-import { saveGameState, loadGameState, saveStats, loadStats, saveLastPlayedDate, resetStats, clearGameState } from './utils/storage';
+import { saveGameState, loadGameState, saveStats, loadStats, saveLastPlayedDate, resetStats, clearGameState, migrateLegacyStats } from './utils/storage';
 import { GameBoard } from './components/GameBoard';
 import { Keyboard } from './components/Keyboard';
 import { StatsModal } from './components/StatsModal';
@@ -22,12 +22,7 @@ const WORD_LENGTH = 5;
  */
 function App() {
   const [gameState, setGameState] = useState<GameState>(() => {
-    // Try to load saved state
-    const saved = loadGameState();
-    if (saved && saved.gameStatus === 'playing') {
-      return saved;
-    }
-    // Create a new game
+    // Create a new game initially - will load saved state when FID is available
     return {
       targetWord: getRandomWord(),
       currentGuess: '',
@@ -37,7 +32,14 @@ function App() {
     };
   });
 
-  const [stats, setStats] = useState<UserStats>(loadStats);
+  const [stats, setStats] = useState<UserStats>(() => ({
+    totalGames: 0,
+    wins: 0,
+    losses: 0,
+    winPercentage: 0,
+    currentStreak: 0,
+    maxStreak: 0
+  }));
   const [showStats, setShowStats] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -90,15 +92,32 @@ function App() {
           console.warn('Failed to get wallet address:', error);
         }
 
-        setUserInfo({
+        const newUserInfo = {
           fid: user.fid,
           username: user.username,
           displayName: user.displayName,
           pfpUrl: user.pfpUrl,
           walletAddress
-        });
+        };
+
+        setUserInfo(newUserInfo);
+
+        // Migrate legacy stats if they exist
+        migrateLegacyStats(user.fid);
+
+        // Load stats and game state for this FID
+        const userStats = loadStats(user.fid);
+        setStats(userStats);
+
+        // Load saved game state for this FID
+        const savedGameState = loadGameState(user.fid);
+        if (savedGameState && savedGameState.gameStatus === 'playing') {
+          setGameState(savedGameState);
+        }
       } catch (error) {
         console.error('Error fetching user data:', error);
+        // If user is not logged in, use null FID for temporary storage
+        setUserInfo(null);
       }
     }
 
@@ -119,9 +138,9 @@ function App() {
   // Save game state on change
   useEffect(() => {
     if (gameState.gameStatus === 'playing') {
-      saveGameState(gameState);
+      saveGameState(gameState, userInfo?.fid ?? null);
     }
-  }, [gameState]);
+  }, [gameState, userInfo?.fid]);
 
   /**
    * Creates array of rows for display on game board
@@ -257,8 +276,8 @@ function App() {
     if (newGameStatus !== 'playing') {
       updateStats(newGameStatus === 'won');
       setShowGameOver(true);
-      saveLastPlayedDate();
-      clearGameState(); // Clear saved state so a new game starts on page refresh
+      saveLastPlayedDate(userInfo?.fid ?? null);
+      clearGameState(userInfo?.fid ?? null); // Clear saved state so a new game starts on page refresh
     }
   }, [gameState]);
 
@@ -280,7 +299,7 @@ function App() {
         ? (newStats.wins / newStats.totalGames) * 100
         : 0;
 
-      saveStats(newStats);
+      saveStats(newStats, userInfo?.fid ?? null);
       return newStats;
     });
   };
@@ -306,7 +325,7 @@ function App() {
    */
   const handleResetStats = () => {
     if (window.confirm('Are you sure you want to reset all statistics?')) {
-      resetStats();
+      resetStats(userInfo?.fid ?? null);
       setStats({
         totalGames: 0,
         wins: 0,
@@ -378,6 +397,11 @@ function App() {
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               Guess the word in 6 attempts
             </p>
+            {!userInfo && (
+              <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                ⚠️ Statistics are stored temporarily. Log in to sync across devices.
+              </p>
+            )}
           </header>
 
           {errorMessage && (

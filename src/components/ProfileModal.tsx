@@ -42,7 +42,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
       }
 
       const browserProvider = new BrowserProvider(provider);
-      const result = await submitStatsOnchain(stats, userInfo.walletAddress, browserProvider);
+      const result = await submitStatsOnchain(stats, userInfo.walletAddress, browserProvider, userInfo.fid);
 
       if (result.success && result.txHash) {
         const txHash = result.txHash;

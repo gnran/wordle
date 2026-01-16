@@ -176,7 +176,8 @@ export async function getCurrentNonce(
 export async function submitStatsOnchain(
   localStats: UserStats,
   walletAddress: string,
-  provider: BrowserProvider
+  provider: BrowserProvider,
+  fid: number | null = null
 ): Promise<{
   success: boolean;
   txHash?: string;
@@ -203,8 +204,8 @@ export async function submitStatsOnchain(
       }
     }
 
-    // Load last submitted statistics
-    let lastSubmitted = loadLastSubmitted();
+    // Load last submitted statistics (FID-based)
+    let lastSubmitted = loadLastSubmitted(fid);
 
     // Get current nonce from contract
     const currentNonce = await getCurrentNonce(walletAddress, provider);
@@ -221,7 +222,7 @@ export async function submitStatsOnchain(
           losses: onchainStats.losses,
           nonce: onchainStats.nonce,
         };
-        saveLastSubmitted(lastSubmitted);
+        saveLastSubmitted(lastSubmitted, fid);
       }
     }
 
@@ -338,7 +339,7 @@ export async function submitStatsOnchain(
         txHash: txHash,
         timestamp: Date.now(),
       };
-      saveLastSubmitted(newLastSubmitted);
+      saveLastSubmitted(newLastSubmitted, fid);
 
       return {
         success: false,
@@ -378,7 +379,7 @@ export async function submitStatsOnchain(
         txHash: receipt.hash,
         timestamp: Date.now(),
       };
-      saveLastSubmitted(newLastSubmitted);
+      saveLastSubmitted(newLastSubmitted, fid);
 
       return {
         success: true,
