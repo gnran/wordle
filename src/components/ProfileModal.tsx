@@ -2,21 +2,23 @@ import { useState } from 'react';
 import React from 'react';
 import { UserStats, UserInfo } from '../types';
 import { formatWalletAddress } from '../utils/format';
-import { submitStatsOnchain } from '../utils/contract';
+import { submitStatsOnchain, getOnchainStats } from '../utils/contract';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { BrowserProvider } from 'ethers';
+import { loadStats, saveStats } from '../utils/storage';
 
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   stats: UserStats;
   userInfo: UserInfo | null;
+  onStatsUpdate?: (stats: UserStats) => void;
 }
 
 /**
  * Profile modal with statistics
  */
-export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalProps) => {
+export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }: ProfileModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | React.ReactNode | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | React.ReactNode | null>(null);
@@ -47,6 +49,35 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo }: ProfileModalP
       if (result.success && result.txHash) {
         const txHash = result.txHash;
         const txLink = `https://basescan.org/tx/${txHash}`;
+        
+        // Reload stats from blockchain after successful submission
+        try {
+          const onchainStats = await getOnchainStats(userInfo.walletAddress, browserProvider);
+          if (onchainStats && userInfo.fid) {
+            // Get local stats to preserve streaks
+            const localStats = loadStats(userInfo.fid);
+            
+            // Merge blockchain stats (source of truth) with local streaks
+            const syncedStats: UserStats = {
+              totalGames: onchainStats.totalGames,
+              wins: onchainStats.wins,
+              losses: onchainStats.losses,
+              winPercentage: onchainStats.winPercentage,
+              currentStreak: localStats.currentStreak,
+              maxStreak: localStats.maxStreak,
+            };
+            
+            saveStats(syncedStats, userInfo.fid);
+            
+            // Notify parent component to update stats
+            if (onStatsUpdate) {
+              onStatsUpdate(syncedStats);
+            }
+          }
+        } catch (reloadError) {
+          console.error('Error reloading stats from blockchain:', reloadError);
+        }
+        
         setSubmitSuccess(
           <div>
             <div className="font-semibold mb-2">✅ Statistics successfully submitted to blockchain!</div>

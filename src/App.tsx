@@ -4,8 +4,8 @@ import { BrowserProvider } from 'ethers';
 import { GameState, UserStats, Letter, LetterState, UserInfo } from './types';
 import { getRandomWord, isValidWord } from './data/words';
 import { evaluateGuess, wordToLetters } from './utils/gameLogic';
-import { saveGameState, loadGameState, saveStats, loadStats, saveLastPlayedDate, resetStats, clearGameState, migrateLegacyStats, isNewUser } from './utils/storage';
-import { submitStatsOnchain } from './utils/contract';
+import { saveGameState, loadGameState, saveStats, loadStats, saveLastPlayedDate, resetStats, clearGameState, migrateLegacyStats } from './utils/storage';
+import { submitStatsOnchain, getOnchainStats } from './utils/contract';
 import { GameBoard } from './components/GameBoard';
 import { Keyboard } from './components/Keyboard';
 import { StatsModal } from './components/StatsModal';
@@ -107,29 +107,50 @@ function App() {
         // Migrate legacy stats if they exist
         migrateLegacyStats(user.fid);
 
-        // Load stats and game state for this FID
-        const userStats = loadStats(user.fid);
-        setStats(userStats);
-
-        // Check if this is a new user (no blockchain submission yet) with initial stats
-        const isNew = isNewUser(user.fid);
-        const hasInitialStats = userStats.totalGames === 0 && userStats.wins === 0 && userStats.losses === 0;
-        
-        // If new user with initial stats and has wallet, automatically submit to blockchain
-        if (isNew && hasInitialStats && newUserInfo.walletAddress) {
-          // Submit initial stats (0, 0, 0, 0) to blockchain on first open
+        // Load stats from blockchain first (if wallet is available), otherwise from local storage
+        let userStats: UserStats;
+        if (newUserInfo.walletAddress) {
           try {
             const provider = await sdk.wallet.getEthereumProvider();
             if (provider) {
               const browserProvider = new BrowserProvider(provider);
-              // This will automatically show transaction popup
-              await submitStatsOnchain(userStats, newUserInfo.walletAddress, browserProvider, user.fid);
+              const onchainStats = await getOnchainStats(newUserInfo.walletAddress, browserProvider);
+              
+              if (onchainStats) {
+                // Load local stats to get streaks (not stored on blockchain)
+                const localStats = loadStats(user.fid);
+                
+                // Use blockchain stats as source of truth, but keep streaks from local storage
+                userStats = {
+                  totalGames: onchainStats.totalGames,
+                  wins: onchainStats.wins,
+                  losses: onchainStats.losses,
+                  winPercentage: onchainStats.winPercentage,
+                  currentStreak: localStats.currentStreak,
+                  maxStreak: localStats.maxStreak,
+                };
+                
+                // Update local storage with blockchain data (for streaks and offline access)
+                saveStats(userStats, user.fid);
+              } else {
+                // Blockchain fetch failed, use local storage as fallback
+                userStats = loadStats(user.fid);
+              }
+            } else {
+              // No provider, use local storage
+              userStats = loadStats(user.fid);
             }
           } catch (error) {
-            // Silently handle errors - user can manually submit later
-            console.log('Auto-submit initial stats error:', error);
+            console.error('Error loading stats from blockchain:', error);
+            // Fallback to local storage if blockchain fetch fails
+            userStats = loadStats(user.fid);
           }
+        } else {
+          // No wallet, use local storage
+          userStats = loadStats(user.fid);
         }
+        
+        setStats(userStats);
 
         // Load saved game state for this FID
         const savedGameState = loadGameState(user.fid);
@@ -323,7 +344,34 @@ function App() {
       const browserProvider = new BrowserProvider(provider);
       // This will automatically show transaction popup
       // If user cancels, local stats remain updated (already saved)
-      await submitStatsOnchain(statsToSubmit, currentUserInfo.walletAddress, browserProvider, currentUserInfo.fid);
+      const result = await submitStatsOnchain(statsToSubmit, currentUserInfo.walletAddress, browserProvider, currentUserInfo.fid);
+      
+      // If submission was successful, reload stats from blockchain to ensure sync
+      if (result.success) {
+        try {
+          const onchainStats = await getOnchainStats(currentUserInfo.walletAddress, browserProvider);
+          if (onchainStats) {
+            // Get current local stats to preserve streaks
+            const localStats = loadStats(currentUserInfo.fid);
+            
+            // Update with blockchain data (source of truth) but keep streaks
+            const syncedStats: UserStats = {
+              totalGames: onchainStats.totalGames,
+              wins: onchainStats.wins,
+              losses: onchainStats.losses,
+              winPercentage: onchainStats.winPercentage,
+              currentStreak: localStats.currentStreak,
+              maxStreak: localStats.maxStreak,
+            };
+            
+            setStats(syncedStats);
+            saveStats(syncedStats, currentUserInfo.fid);
+          }
+        } catch (reloadError) {
+          console.error('Error reloading stats from blockchain:', reloadError);
+          // Continue with local stats if reload fails
+        }
+      }
     } catch (error) {
       // Silently handle errors - local stats are already updated
       console.log('Auto-submit stats error (local stats still updated):', error);
@@ -521,6 +569,7 @@ function App() {
         onClose={() => setShowProfile(false)}
         stats={stats}
         userInfo={userInfo}
+        onStatsUpdate={(updatedStats) => setStats(updatedStats)}
       />
     </div>
   );

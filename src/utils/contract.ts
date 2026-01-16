@@ -513,6 +513,13 @@ export async function getOnchainStats(
   nonce: number;
 } | null> {
   try {
+    // Check network first
+    const networkCheck = await checkNetwork(provider);
+    if (!networkCheck.correct) {
+      console.warn('Wrong network for loading stats:', networkCheck.error);
+      return null;
+    }
+
     const contract = await getContract(provider);
     const stats = await contract.getStats(playerAddress);
     const winPercentage = await contract.getWinPercentage(playerAddress);
