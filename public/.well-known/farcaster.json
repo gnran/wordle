@@ -14,7 +14,7 @@
       "webhookUrl": "",
       "subtitle": "Guess the word in 6 attempts",
       "description": "Classic Wordle game — guess the word in 6 attempts. Test your vocabulary!",
-      "screenshotUrls": [""],
+      "screenshotUrls": ["https://wordle-six-orcin.vercel.app/promotional.png"],
       "primaryCategory": "games",
       "tags": ["wordle", "game", "puzzle", "word"],
       "heroImageUrl": "",
