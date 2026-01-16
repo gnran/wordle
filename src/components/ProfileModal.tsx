@@ -41,13 +41,12 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
       return;
     }
 
-    // If wallet is available, always fetch from blockchain
-    if (userInfo?.walletAddress && userInfo?.fid) {
+    // If user info is available, try to fetch from blockchain
+    if (userInfo?.fid) {
       setHasFetchedBlockchain(true);
       setIsLoadingStats(true);
       const fetchBlockchainStats = async () => {
         try {
-          console.log('ProfileModal: Fetching stats from blockchain for', userInfo.walletAddress);
           const provider = await sdk.wallet.getEthereumProvider();
           if (!provider) {
             console.warn('ProfileModal: No provider available');
@@ -55,8 +54,29 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
             return;
           }
 
+          // Get wallet address directly from provider to ensure we use the Farcaster wallet
+          let accounts = await provider.request({ method: 'eth_accounts' });
+          if (!accounts || accounts.length === 0) {
+            try {
+              accounts = await provider.request({ method: 'eth_requestAccounts' });
+            } catch (requestError) {
+              console.warn('ProfileModal: User did not provide wallet access');
+              setIsLoadingStats(false);
+              return;
+            }
+          }
+
+          if (!accounts || accounts.length === 0) {
+            console.warn('ProfileModal: No wallet accounts available');
+            setIsLoadingStats(false);
+            return;
+          }
+
+          const walletAddress = accounts[0];
+          console.log('ProfileModal: Using Farcaster wallet address:', walletAddress);
+
           const browserProvider = new BrowserProvider(provider);
-          const onchainStats = await getOnchainStats(userInfo.walletAddress!, browserProvider);
+          const onchainStats = await getOnchainStats(walletAddress, browserProvider);
           
           console.log('ProfileModal: Blockchain stats received:', onchainStats);
           
@@ -102,15 +122,12 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
       setHasFetchedBlockchain(true); // Mark as fetched to prevent re-running
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, userInfo?.walletAddress, userInfo?.fid]);
+  }, [isOpen, userInfo?.fid]);
 
   if (!isOpen) return null;
 
   const handleSubmitStats = async () => {
-    if (!userInfo?.walletAddress) {
-      setSubmitError('Wallet not connected. Please connect a wallet through Farcaster.');
-      return;
-    }
+    // We'll get wallet address from provider, so no need to check userInfo.walletAddress
 
     setIsSubmitting(true);
     setSubmitError(null);
@@ -124,13 +141,34 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
         return;
       }
 
+      // Get wallet address directly from provider
+      let accounts = await provider.request({ method: 'eth_accounts' });
+      if (!accounts || accounts.length === 0) {
+        try {
+          accounts = await provider.request({ method: 'eth_requestAccounts' });
+        } catch (requestError) {
+          setSubmitError('Wallet not connected. Please connect a wallet through Farcaster.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      if (!accounts || accounts.length === 0) {
+        setSubmitError('No wallet accounts available');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const walletAddress = accounts[0];
+      console.log('ProfileModal: Submitting stats using Farcaster wallet:', walletAddress);
+
       const browserProvider = new BrowserProvider(provider);
       if (!displayStats) {
         setSubmitError('No stats available to submit');
         setIsSubmitting(false);
         return;
       }
-      const result = await submitStatsOnchain(displayStats, userInfo.walletAddress, browserProvider, userInfo.fid);
+      const result = await submitStatsOnchain(displayStats, walletAddress, browserProvider, userInfo.fid);
 
       if (result.success && result.txHash) {
         const txHash = result.txHash;
@@ -138,7 +176,7 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
         
         // Reload stats from blockchain after successful submission (ONLY blockchain data)
         try {
-          const onchainStats = await getOnchainStats(userInfo.walletAddress, browserProvider);
+          const onchainStats = await getOnchainStats(walletAddress, browserProvider);
           if (onchainStats) {
             // Use ONLY blockchain data - no local storage
             const blockchainOnlyStats: UserStats = {
@@ -252,9 +290,28 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
                         return;
                       }
                       
-                      console.log('ProfileModal: Refreshing stats from blockchain for', userInfo.walletAddress);
+                      // Get wallet address directly from provider
+                      let accounts = await provider.request({ method: 'eth_accounts' });
+                      if (!accounts || accounts.length === 0) {
+                        try {
+                          accounts = await provider.request({ method: 'eth_requestAccounts' });
+                        } catch (requestError) {
+                          console.warn('ProfileModal: User did not provide wallet access for refresh');
+                          setIsLoadingStats(false);
+                          return;
+                        }
+                      }
+
+                      if (!accounts || accounts.length === 0) {
+                        console.warn('ProfileModal: No wallet accounts available for refresh');
+                        setIsLoadingStats(false);
+                        return;
+                      }
+
+                      const walletAddress = accounts[0];
+                      console.log('ProfileModal: Refreshing stats from blockchain for Farcaster wallet:', walletAddress);
                       const browserProvider = new BrowserProvider(provider);
-                      const onchainStats = await getOnchainStats(userInfo.walletAddress, browserProvider);
+                      const onchainStats = await getOnchainStats(walletAddress, browserProvider);
                       
                       console.log('ProfileModal: Refresh - Blockchain stats received:', onchainStats);
                       
