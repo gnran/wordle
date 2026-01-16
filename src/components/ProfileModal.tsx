@@ -32,6 +32,7 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
     winPercentage: number;
   } | null>(null);
   const [isLoadingDebug, setIsLoadingDebug] = useState(false);
+  const [debugError, setDebugError] = useState<string | null>(null);
 
   // Fetch fresh stats from blockchain when modal opens (blockchain is source of truth)
   useEffect(() => {
@@ -442,27 +443,35 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
             <button
               onClick={async () => {
                 setIsLoadingDebug(true);
+                setDebugError(null);
+                setDebugStats(null);
                 try {
                   const provider = await sdk.wallet.getEthereumProvider();
-                  if (provider) {
-                    const browserProvider = new BrowserProvider(provider);
-                    const testAddress = '0xB75A329510A5B53d724944Dea04F5c3B066F7459';
-                    console.log('Debug: Fetching stats for address:', testAddress);
-                    const onchainStats = await getOnchainStats(testAddress, browserProvider);
-                    console.log('Debug: Stats received:', onchainStats);
-                    if (onchainStats) {
-                      setDebugStats({
-                        totalGames: onchainStats.totalGames,
-                        wins: onchainStats.wins,
-                        losses: onchainStats.losses,
-                        winPercentage: onchainStats.winPercentage,
-                      });
-                    } else {
-                      setDebugStats(null);
-                    }
+                  if (!provider) {
+                    setDebugError('No provider available');
+                    return;
                   }
-                } catch (error) {
+                  const browserProvider = new BrowserProvider(provider);
+                  const testAddress = '0xB75A329510A5B53d724944Dea04F5c3B066F7459';
+                  console.log('Debug: Fetching stats for address:', testAddress);
+                  const onchainStats = await getOnchainStats(testAddress, browserProvider);
+                  console.log('Debug: Stats received:', onchainStats);
+                  if (onchainStats) {
+                    setDebugStats({
+                      totalGames: onchainStats.totalGames,
+                      wins: onchainStats.wins,
+                      losses: onchainStats.losses,
+                      winPercentage: onchainStats.winPercentage,
+                    });
+                    if (onchainStats.totalGames === 0 && onchainStats.wins === 0 && onchainStats.losses === 0) {
+                      setDebugError('Contract call succeeded but returned zeros - player may have no stats yet, or contract call reverted');
+                    }
+                  } else {
+                    setDebugError('getOnchainStats returned null - check console for details');
+                  }
+                } catch (error: any) {
                   console.error('Debug: Error fetching stats:', error);
+                  setDebugError(`Error: ${error?.message || error?.code || String(error)}`);
                   setDebugStats(null);
                 } finally {
                   setIsLoadingDebug(false);
@@ -474,6 +483,12 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
               {isLoadingDebug ? 'Loading...' : 'Fetch Stats'}
             </button>
           </div>
+          {debugError && (
+            <div className="mt-2 text-xs text-red-400 dark:text-red-300">
+              <div className="font-semibold mb-1">Error:</div>
+              <div className="break-all">{debugError}</div>
+            </div>
+          )}
           {debugStats && (
             <div className="mt-2 text-xs">
               <div className="text-yellow-400 dark:text-yellow-300 font-semibold mb-1">Stats from blockchain:</div>
