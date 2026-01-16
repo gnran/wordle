@@ -413,10 +413,10 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
                 </div>
               )}
               {fetchingWalletAddress && (
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1">
                   <span className="text-xs sm:text-sm text-yellow-600 dark:text-yellow-400">Fetching from:</span>
-                  <span className="text-xs sm:text-sm font-mono font-semibold text-yellow-600 dark:text-yellow-400">
-                    {formatWalletAddress(fetchingWalletAddress)}
+                  <span className="text-xs sm:text-sm font-mono font-semibold text-yellow-600 dark:text-yellow-400 break-all">
+                    {fetchingWalletAddress}
                   </span>
                 </div>
               )}
