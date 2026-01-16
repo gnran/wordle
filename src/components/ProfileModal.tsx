@@ -22,68 +22,76 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | React.ReactNode | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | React.ReactNode | null>(null);
-  const [displayStats, setDisplayStats] = useState<UserStats>(stats);
+  const [displayStats, setDisplayStats] = useState<UserStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [hasFetchedBlockchain, setHasFetchedBlockchain] = useState(false);
 
   // Fetch fresh stats from blockchain when modal opens (blockchain is source of truth)
   useEffect(() => {
+    // Reset flag when modal closes
     if (!isOpen) {
-      // Reset to stats prop when modal closes
-      setDisplayStats(stats);
+      setHasFetchedBlockchain(false);
+      return;
+    }
+
+    // Only fetch once when modal opens (don't refetch if already fetched)
+    if (hasFetchedBlockchain) {
       return;
     }
 
     // If wallet is available, always fetch from blockchain
     if (userInfo?.walletAddress && userInfo?.fid) {
+      setHasFetchedBlockchain(true);
       setIsLoadingStats(true);
       const fetchBlockchainStats = async () => {
         try {
           console.log('ProfileModal: Fetching stats from blockchain for', userInfo.walletAddress);
           const provider = await sdk.wallet.getEthereumProvider();
-          if (provider) {
-            const browserProvider = new BrowserProvider(provider);
-            const onchainStats = await getOnchainStats(userInfo.walletAddress!, browserProvider);
+          if (!provider) {
+            console.warn('ProfileModal: No provider available');
+            setIsLoadingStats(false);
+            return;
+          }
+
+          const browserProvider = new BrowserProvider(provider);
+          const onchainStats = await getOnchainStats(userInfo.walletAddress!, browserProvider);
+          
+          console.log('ProfileModal: Blockchain stats received:', onchainStats);
+          
+          if (onchainStats) {
+            // Get local stats to preserve streaks
+            const localStats = loadStats(userInfo.fid);
             
-            console.log('ProfileModal: Blockchain stats received:', onchainStats);
+            // Merge blockchain stats (source of truth) with local streaks
+            const syncedStats: UserStats = {
+              totalGames: onchainStats.totalGames,
+              wins: onchainStats.wins,
+              losses: onchainStats.losses,
+              winPercentage: onchainStats.winPercentage,
+              currentStreak: localStats.currentStreak,
+              maxStreak: localStats.maxStreak,
+            };
             
-            if (onchainStats) {
-              // Get local stats to preserve streaks
-              const localStats = loadStats(userInfo.fid);
-              
-              // Merge blockchain stats (source of truth) with local streaks
-              const syncedStats: UserStats = {
-                totalGames: onchainStats.totalGames,
-                wins: onchainStats.wins,
-                losses: onchainStats.losses,
-                winPercentage: onchainStats.winPercentage,
-                currentStreak: localStats.currentStreak,
-                maxStreak: localStats.maxStreak,
-              };
-              
-              console.log('ProfileModal: Synced stats (blockchain + local streaks):', syncedStats);
-              setDisplayStats(syncedStats);
-              
-              // Update parent component
-              if (onStatsUpdate) {
-                onStatsUpdate(syncedStats);
-              }
-              
-              // Update local storage
-              saveStats(syncedStats, userInfo.fid);
-            } else {
-              // Blockchain fetch returned null (no data on chain or error), use provided stats
-              console.warn('ProfileModal: No blockchain stats found, using local stats');
-              setDisplayStats(stats);
+            console.log('ProfileModal: Synced stats (blockchain + local streaks):', syncedStats);
+            console.log('ProfileModal: Setting displayStats to blockchain data:', syncedStats.totalGames, 'games');
+            setDisplayStats(syncedStats);
+            
+            // Update parent component
+            if (onStatsUpdate) {
+              onStatsUpdate(syncedStats);
             }
+            
+            // Update local storage
+            saveStats(syncedStats, userInfo.fid);
           } else {
-            // No provider, use provided stats
-            console.warn('ProfileModal: No provider available, using local stats');
-            setDisplayStats(stats);
+            // Blockchain fetch returned null (no data on chain or error)
+            console.warn('ProfileModal: No blockchain stats found (returned null)');
+            console.warn('ProfileModal: This might mean: 1) No data on chain, 2) Wrong network, 3) Contract error');
+            // Don't update displayStats - keep current value or show error
+            // The stats prop might have wrong data, so we don't want to use it
           }
         } catch (error) {
           console.error('ProfileModal: Error fetching blockchain stats:', error);
-          // On error, use provided stats
-          setDisplayStats(stats);
         } finally {
           setIsLoadingStats(false);
         }
@@ -91,11 +99,13 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
       
       fetchBlockchainStats();
     } else {
-      // No wallet, use provided stats
+      // No wallet, use provided stats as fallback
       console.log('ProfileModal: No wallet connected, using local stats');
       setDisplayStats(stats);
+      setHasFetchedBlockchain(true); // Mark as fetched to prevent re-running
     }
-  }, [isOpen, userInfo?.walletAddress, userInfo?.fid, onStatsUpdate, stats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, userInfo?.walletAddress, userInfo?.fid]);
 
   if (!isOpen) return null;
 
@@ -118,6 +128,11 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
       }
 
       const browserProvider = new BrowserProvider(provider);
+      if (!displayStats) {
+        setSubmitError('No stats available to submit');
+        setIsSubmitting(false);
+        return;
+      }
       const result = await submitStatsOnchain(displayStats, userInfo.walletAddress, browserProvider, userInfo.fid);
 
       if (result.success && result.txHash) {
@@ -222,12 +237,58 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
       >
         <div className="flex justify-between items-center mb-3 sm:mb-6">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Profile</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl sm:text-2xl"
-          >
-            ×
-          </button>
+          <div className="flex items-center gap-2">
+            {userInfo?.walletAddress && (
+              <button
+                onClick={() => {
+                  setHasFetchedBlockchain(false);
+                  setIsLoadingStats(true);
+                  const fetchBlockchainStats = async () => {
+                    try {
+                      const provider = await sdk.wallet.getEthereumProvider();
+                      if (provider && userInfo?.walletAddress && userInfo?.fid) {
+                        const browserProvider = new BrowserProvider(provider);
+                        const onchainStats = await getOnchainStats(userInfo.walletAddress, browserProvider);
+                        
+                        if (onchainStats) {
+                          const localStats = loadStats(userInfo.fid);
+                          const syncedStats: UserStats = {
+                            totalGames: onchainStats.totalGames,
+                            wins: onchainStats.wins,
+                            losses: onchainStats.losses,
+                            winPercentage: onchainStats.winPercentage,
+                            currentStreak: localStats.currentStreak,
+                            maxStreak: localStats.maxStreak,
+                          };
+                          setDisplayStats(syncedStats);
+                          if (onStatsUpdate) {
+                            onStatsUpdate(syncedStats);
+                          }
+                          saveStats(syncedStats, userInfo.fid);
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error refreshing stats:', error);
+                    } finally {
+                      setIsLoadingStats(false);
+                      setHasFetchedBlockchain(true);
+                    }
+                  };
+                  fetchBlockchainStats();
+                }}
+                className="text-xs text-blue-400 hover:text-blue-300 underline"
+                title="Refresh from blockchain"
+              >
+                🔄
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl sm:text-2xl"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         {/* User information */}
@@ -287,37 +348,43 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
             </div>
           )}
           
-          <div className="grid grid-cols-2 gap-2 sm:gap-3">
-            {/* Total games */}
-            <div className="bg-blue-900/60 dark:bg-blue-900/60 rounded-lg p-2 sm:p-4">
-              <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">TOTAL GAMES</div>
-              <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{displayStats.totalGames}</div>
-              <div className="text-gray-400 text-xs">All puzzles played</div>
-            </div>
-
-            {/* Wins */}
-            <div className="bg-blue-900/60 dark:bg-blue-900/60 rounded-lg p-2 sm:p-4">
-              <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">WINS</div>
-              <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{displayStats.wins}</div>
-              <div className="text-gray-400 text-xs">Games won</div>
-            </div>
-
-            {/* Losses */}
-            <div className="bg-blue-900/60 dark:bg-blue-900/60 rounded-lg p-2 sm:p-4">
-              <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">LOSSES</div>
-              <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{displayStats.losses}</div>
-              <div className="text-gray-400 text-xs">Games lost</div>
-            </div>
-
-            {/* Win percentage */}
-            <div className="bg-blue-900/60 dark:bg-blue-900/60 rounded-lg p-2 sm:p-4">
-              <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">WIN PERCENTAGE</div>
-              <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">
-                {displayStats.winPercentage > 0 ? `${displayStats.winPercentage.toFixed(1)}%` : '0%'}
+          {displayStats ? (
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              {/* Total games */}
+              <div className="bg-blue-900/60 dark:bg-blue-900/60 rounded-lg p-2 sm:p-4">
+                <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">TOTAL GAMES</div>
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{displayStats.totalGames}</div>
+                <div className="text-gray-400 text-xs">All puzzles played</div>
               </div>
-              <div className="text-gray-400 text-xs">Success rate</div>
+
+              {/* Wins */}
+              <div className="bg-blue-900/60 dark:bg-blue-900/60 rounded-lg p-2 sm:p-4">
+                <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">WINS</div>
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{displayStats.wins}</div>
+                <div className="text-gray-400 text-xs">Games won</div>
+              </div>
+
+              {/* Losses */}
+              <div className="bg-blue-900/60 dark:bg-blue-900/60 rounded-lg p-2 sm:p-4">
+                <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">LOSSES</div>
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">{displayStats.losses}</div>
+                <div className="text-gray-400 text-xs">Games lost</div>
+              </div>
+
+              {/* Win percentage */}
+              <div className="bg-blue-900/60 dark:bg-blue-900/60 rounded-lg p-2 sm:p-4">
+                <div className="text-white text-xs font-bold uppercase tracking-wide mb-1 sm:mb-2">WIN PERCENTAGE</div>
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">
+                  {displayStats.winPercentage > 0 ? `${displayStats.winPercentage.toFixed(1)}%` : '0%'}
+                </div>
+                <div className="text-gray-400 text-xs">Success rate</div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="text-center py-4 text-gray-400 dark:text-gray-500 text-sm">
+              No stats available
+            </div>
+          )}
         </div>
 
         {/* Blockchain stats submission button */}
@@ -325,7 +392,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
           <div className="mb-2 sm:mb-4">
             <button
               onClick={handleSubmitStats}
-              disabled={isSubmitting || displayStats.totalGames === 0}
+              disabled={isSubmitting || !displayStats || displayStats.totalGames === 0}
               className="w-full bg-green-800 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-gray-200 font-semibold py-1.5 sm:py-2 px-3 sm:px-4 rounded transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               {isSubmitting ? (
@@ -369,7 +436,7 @@ export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }
               </div>
             )}
 
-            {displayStats.totalGames === 0 && (
+            {displayStats && displayStats.totalGames === 0 && (
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
                 Play at least one game to submit statistics
               </p>
