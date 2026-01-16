@@ -10,7 +10,7 @@
 export const CONTRACT_CHAIN_ID = 8453; // Base Mainnet
 
 // Deployed contract address
-export const CONTRACT_ADDRESS = "0x470Dd8f22f040F46858c40633e7C093a86AC738D";
+export const CONTRACT_ADDRESS = "0xBF0a43607795260B609e6E36d0fD526b3f112628";
 
 // Contract ABI
 export const CONTRACT_ABI = [

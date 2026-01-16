@@ -253,6 +253,15 @@ export async function submitStatsOnchain(
       };
     }
 
+    // Re-check network one more time before contract interaction
+    const finalNetworkCheck = await checkNetwork(provider);
+    if (!finalNetworkCheck.correct) {
+      return {
+        success: false,
+        error: `Wrong network. Expected Base (${CONTRACT_CHAIN_ID}), got ${finalNetworkCheck.chainId || 'unknown'}. Please switch to Base network.`,
+      };
+    }
+
     // Get contract with signer
     const signer = await provider.getSigner();
     const contract = await getContractWithSigner(signer);
@@ -260,9 +269,13 @@ export async function submitStatsOnchain(
     // Check that contract exists
     const code = await provider.getCode(CONTRACT_ADDRESS);
     if (code === '0x' || code === '0x0') {
+      // Get current network info for better error message
+      const network = await provider.getNetwork();
+      const currentChainId = Number(network.chainId);
+      
       return {
         success: false,
-        error: 'Contract not found at specified address. Check configuration.',
+        error: `Contract not found at address ${CONTRACT_ADDRESS} on network ${currentChainId}. Expected network: ${CONTRACT_CHAIN_ID} (Base). Please verify you're on the correct network and that the contract is deployed.`,
       };
     }
 
