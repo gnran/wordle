@@ -10,15 +10,14 @@ import { BrowserProvider } from 'ethers';
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  stats: UserStats;
   userInfo: UserInfo | null;
   onStatsUpdate?: (stats: UserStats) => void;
 }
 
 /**
- * Profile modal with statistics
+ * Profile modal with statistics (fetches from blockchain only)
  */
-export const ProfileModal = ({ isOpen, onClose, stats, userInfo, onStatsUpdate }: ProfileModalProps) => {
+export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: ProfileModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | React.ReactNode | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | React.ReactNode | null>(null);

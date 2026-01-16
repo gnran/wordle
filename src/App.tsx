@@ -567,7 +567,6 @@ function App() {
       <ProfileModal
         isOpen={showProfile}
         onClose={() => setShowProfile(false)}
-        stats={stats}
         userInfo={userInfo}
         onStatsUpdate={(updatedStats) => setStats(updatedStats)}
       />
