@@ -424,13 +424,43 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
           <div className="text-xs text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-0.5 sm:mb-1">LIFETIME</div>
           <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-4">All-time performance</h3>
           
-          {isLoadingStats && (
-            <div className="text-center py-4 text-gray-400 dark:text-gray-500 text-sm">
-              Loading stats from blockchain...
+          {isLoadingStats ? (
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              {/* Skeleton loaders for stat cards */}
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-blue-900/60 dark:bg-blue-900/60 rounded-lg p-2 sm:p-4 animate-pulse">
+                  <div className="h-3 bg-blue-800/50 dark:bg-blue-800/50 rounded mb-2 sm:mb-3 w-20"></div>
+                  <div className="h-8 sm:h-10 bg-blue-800/50 dark:bg-blue-800/50 rounded mb-1 sm:mb-2 w-12"></div>
+                  <div className="h-3 bg-blue-800/50 dark:bg-blue-800/50 rounded w-24"></div>
+                </div>
+              ))}
+              <div className="col-span-2 flex items-center justify-center py-2">
+                <svg
+                  className="animate-spin h-5 w-5 text-blue-400 mr-2"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <span className="text-gray-400 dark:text-gray-500 text-xs sm:text-sm">
+                  Loading stats from blockchain...
+                </span>
+              </div>
             </div>
-          )}
-          
-          {displayStats ? (
+          ) : displayStats ? (
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               {/* Total games */}
               <div className="bg-blue-900/60 dark:bg-blue-900/60 rounded-lg p-2 sm:p-4">
