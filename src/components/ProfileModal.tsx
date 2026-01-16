@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import React from 'react';
 import { UserStats, UserInfo } from '../types';
 import { formatWalletAddress } from '../utils/format';
-import { submitStatsOnchain, getOnchainStats } from '../utils/contract';
+import { submitStatsOnchain, getOnchainStatsPublic } from '../utils/contract';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { BrowserProvider } from 'ethers';
 // Removed loadStats and saveStats - ProfileModal uses ONLY blockchain data
@@ -47,62 +47,70 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
       setIsLoadingStats(true);
       const fetchBlockchainStats = async () => {
         try {
-          const provider = await sdk.wallet.getEthereumProvider();
-          if (!provider) {
-            console.warn('ProfileModal: No provider available');
-            setIsLoadingStats(false);
-            return;
-          }
+          // First try to get wallet address from provider (if available)
+          let walletAddress: string | null = null;
+          
+          try {
+            const provider = await sdk.wallet.getEthereumProvider();
+            if (provider) {
+              // Get wallet address directly from provider to ensure we use the Farcaster wallet
+              let accounts = await provider.request({ method: 'eth_accounts' });
+              if (!accounts || accounts.length === 0) {
+                try {
+                  accounts = await provider.request({ method: 'eth_requestAccounts' });
+                } catch (requestError) {
+                  console.log('ProfileModal: User did not provide wallet access, using public RPC');
+                }
+              }
 
-          // Get wallet address directly from provider to ensure we use the Farcaster wallet
-          let accounts = await provider.request({ method: 'eth_accounts' });
-          if (!accounts || accounts.length === 0) {
-            try {
-              accounts = await provider.request({ method: 'eth_requestAccounts' });
-            } catch (requestError) {
-              console.warn('ProfileModal: User did not provide wallet access');
-              setIsLoadingStats(false);
-              return;
+              if (accounts && accounts.length > 0) {
+                walletAddress = accounts[0];
+                console.log('ProfileModal: Using Farcaster wallet address:', walletAddress);
+              }
             }
+          } catch (providerError) {
+            console.log('ProfileModal: No provider available, using public RPC');
           }
 
-          if (!accounts || accounts.length === 0) {
-            console.warn('ProfileModal: No wallet accounts available');
-            setIsLoadingStats(false);
-            return;
+          // Fallback to userInfo.walletAddress if available
+          if (!walletAddress && userInfo.walletAddress) {
+            walletAddress = userInfo.walletAddress;
+            console.log('ProfileModal: Using wallet address from userInfo:', walletAddress);
           }
 
-          const walletAddress = accounts[0];
-          console.log('ProfileModal: Using Farcaster wallet address:', walletAddress);
-
-          const browserProvider = new BrowserProvider(provider);
-          const onchainStats = await getOnchainStats(walletAddress, browserProvider);
-          
-          console.log('ProfileModal: Blockchain stats received:', onchainStats);
-          
-          if (onchainStats) {
-            // Use ONLY blockchain data - no local storage, no streaks
-            const blockchainOnlyStats: UserStats = {
-              totalGames: onchainStats.totalGames,
-              wins: onchainStats.wins,
-              losses: onchainStats.losses,
-              winPercentage: onchainStats.winPercentage,
-              currentStreak: 0, // Not stored on blockchain
-              maxStreak: 0, // Not stored on blockchain
-            };
+          // If we have a wallet address, fetch stats using public RPC (no wallet connection needed)
+          if (walletAddress) {
+            const onchainStats = await getOnchainStatsPublic(walletAddress);
             
-            console.log('ProfileModal: Using ONLY blockchain data:', blockchainOnlyStats);
-            console.log('ProfileModal: Setting displayStats to blockchain data:', blockchainOnlyStats.totalGames, 'games');
-            setDisplayStats(blockchainOnlyStats);
+            console.log('ProfileModal: Blockchain stats received:', onchainStats);
             
-            // Update parent component
-            if (onStatsUpdate) {
-              onStatsUpdate(blockchainOnlyStats);
+            if (onchainStats) {
+              // Use ONLY blockchain data - no local storage, no streaks
+              const blockchainOnlyStats: UserStats = {
+                totalGames: onchainStats.totalGames,
+                wins: onchainStats.wins,
+                losses: onchainStats.losses,
+                winPercentage: onchainStats.winPercentage,
+                currentStreak: 0, // Not stored on blockchain
+                maxStreak: 0, // Not stored on blockchain
+              };
+              
+              console.log('ProfileModal: Using ONLY blockchain data:', blockchainOnlyStats);
+              console.log('ProfileModal: Setting displayStats to blockchain data:', blockchainOnlyStats.totalGames, 'games');
+              setDisplayStats(blockchainOnlyStats);
+              
+              // Update parent component
+              if (onStatsUpdate) {
+                onStatsUpdate(blockchainOnlyStats);
+              }
+            } else {
+              // Blockchain fetch returned null - show error, don't use fallback
+              console.warn('ProfileModal: No blockchain stats found (returned null)');
+              console.warn('ProfileModal: This might mean: 1) No data on chain, 2) Wrong network, 3) Contract error');
+              // Keep displayStats as null to show "No stats available"
             }
           } else {
-            // Blockchain fetch returned null - show error, don't use fallback
-            console.warn('ProfileModal: No blockchain stats found (returned null)');
-            console.warn('ProfileModal: This might mean: 1) No data on chain, 2) Wrong network, 3) Contract error');
+            console.warn('ProfileModal: No wallet address available');
             // Keep displayStats as null to show "No stats available"
           }
         } catch (error) {
@@ -122,7 +130,7 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
       setHasFetchedBlockchain(true); // Mark as fetched to prevent re-running
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, userInfo?.fid]);
+  }, [isOpen, userInfo?.fid, userInfo?.walletAddress]);
 
   if (!isOpen) return null;
 
@@ -183,7 +191,7 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
         
         // Reload stats from blockchain after successful submission (ONLY blockchain data)
         try {
-          const onchainStats = await getOnchainStats(walletAddress, browserProvider);
+          const onchainStats = await getOnchainStatsPublic(walletAddress);
           if (onchainStats) {
             // Use ONLY blockchain data - no local storage
             const blockchainOnlyStats: UserStats = {
@@ -317,8 +325,7 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
 
                       const walletAddress = accounts[0];
                       console.log('ProfileModal: Refreshing stats from blockchain for Farcaster wallet:', walletAddress);
-                      const browserProvider = new BrowserProvider(provider);
-                      const onchainStats = await getOnchainStats(walletAddress, browserProvider);
+                      const onchainStats = await getOnchainStatsPublic(walletAddress);
                       
                       console.log('ProfileModal: Refresh - Blockchain stats received:', onchainStats);
                       

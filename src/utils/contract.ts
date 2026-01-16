@@ -1,4 +1,4 @@
-import { BrowserProvider, Contract, Signer } from 'ethers';
+import { BrowserProvider, Contract, Signer, JsonRpcProvider } from 'ethers';
 import { CONTRACT_ADDRESS, CONTRACT_ABI, CONTRACT_CHAIN_ID } from '../config/contract';
 import { UserStats, LastSubmitted } from '../types';
 import { loadLastSubmitted, saveLastSubmitted } from './storage';
@@ -495,6 +495,63 @@ export async function submitStatsOnchain(
       success: false,
       error: cleanError || 'An error occurred while sending transaction. Please try again.',
     };
+  }
+}
+
+/**
+ * Get RPC URL for the contract network
+ */
+function getRpcUrl(): string {
+  return CONTRACT_CHAIN_ID === 8453
+    ? 'https://mainnet.base.org'
+    : 'https://sepolia.base.org';
+}
+
+/**
+ * Get statistics from blockchain using public RPC (no wallet required)
+ */
+export async function getOnchainStatsPublic(
+  playerAddress: string
+): Promise<{
+  totalGames: number;
+  wins: number;
+  losses: number;
+  winPercentage: number;
+  lastUpdated: number;
+  nonce: number;
+} | null> {
+  try {
+    console.log('getOnchainStatsPublic: Fetching stats for address:', playerAddress);
+    
+    const rpcUrl = getRpcUrl();
+    const provider = new JsonRpcProvider(rpcUrl);
+    const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+    
+    console.log('getOnchainStatsPublic: Contract obtained, calling getStats for:', playerAddress);
+    
+    const stats = await contract.getStats(playerAddress);
+    console.log('getOnchainStatsPublic: Raw stats from contract:', stats);
+    
+    const winPercentage = await contract.getWinPercentage(playerAddress);
+    console.log('getOnchainStatsPublic: Win percentage:', winPercentage);
+
+    const result = {
+      totalGames: Number(stats.totalGames),
+      wins: Number(stats.wins),
+      losses: Number(stats.losses),
+      winPercentage: Number(winPercentage) / 100, // Convert from 10000 = 100%
+      lastUpdated: Number(stats.lastUpdated),
+      nonce: Number(stats.nonce),
+    };
+    
+    console.log('getOnchainStatsPublic: Processed stats:', result);
+    return result;
+  } catch (error: any) {
+    console.error('getOnchainStatsPublic: Error getting statistics from blockchain:', error);
+    console.error('getOnchainStatsPublic: Error message:', error?.message);
+    console.error('getOnchainStatsPublic: Error code:', error?.code);
+    console.error('getOnchainStatsPublic: Error details:', error);
+    return null;
   }
 }
 
