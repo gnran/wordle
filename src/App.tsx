@@ -14,6 +14,7 @@ import { Navigation } from './components/Navigation';
 import { LeaderboardModal } from './components/LeaderboardModal';
 import { FAQModal } from './components/FAQModal';
 import { ProfileModal } from './components/ProfileModal';
+import { LoadingScreen } from './components/LoadingScreen';
 
 
 const MAX_ATTEMPTS = 6;
@@ -56,6 +57,7 @@ function App() {
   const [showFAQ, setShowFAQ] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Notify SDK that app is ready
   useEffect(() => {
@@ -161,6 +163,9 @@ function App() {
         console.error('Error fetching user data:', error);
         // If user is not logged in, use null FID for temporary storage
         setUserInfo(null);
+      } finally {
+        // Hide loading screen once connection process is complete
+        setIsLoading(false);
       }
     }
 
@@ -478,6 +483,11 @@ function App() {
     // Scroll to top or refresh page
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Show loading screen while wallet is connecting
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
