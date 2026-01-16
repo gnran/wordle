@@ -4,7 +4,7 @@ import { BrowserProvider } from 'ethers';
 import { GameState, UserStats, Letter, LetterState, UserInfo } from './types';
 import { getRandomWord, isValidWord } from './data/words';
 import { evaluateGuess, wordToLetters } from './utils/gameLogic';
-import { saveGameState, loadGameState, saveStats, loadStats, saveLastPlayedDate, resetStats, clearGameState, migrateLegacyStats } from './utils/storage';
+import { saveGameState, loadGameState, saveStats, loadStats, saveLastPlayedDate, resetStats, clearGameState, migrateLegacyStats, saveLastSubmitted } from './utils/storage';
 import { submitStatsOnchain, getOnchainStats } from './utils/contract';
 import { GameBoard } from './components/GameBoard';
 import { Keyboard } from './components/Keyboard';
@@ -134,6 +134,15 @@ function App() {
                 
                 // Update local storage with blockchain data (for streaks and offline access)
                 saveStats(userStats, user.fid);
+                
+                // Fetch and save nonce from blockchain to local storage
+                // The nonce is already included in onchainStats from the contract
+                saveLastSubmitted({
+                  games: onchainStats.totalGames,
+                  wins: onchainStats.wins,
+                  losses: onchainStats.losses,
+                  nonce: onchainStats.nonce, // Nonce fetched from blockchain contract
+                }, user.fid);
               } else {
                 // Blockchain fetch failed, use local storage as fallback
                 userStats = loadStats(user.fid);
