@@ -525,53 +525,13 @@ export async function getOnchainStats(
 
     console.log('getOnchainStats: Network check passed, getting contract...');
     const contract = await getContract(provider);
-    
-    // Check if contract exists at the address
-    const code = await provider.getCode(CONTRACT_ADDRESS);
-    if (code === '0x' || code === '0x0') {
-      console.error('getOnchainStats: Contract does not exist at address:', CONTRACT_ADDRESS);
-      return null;
-    }
-    console.log('getOnchainStats: Contract code exists, length:', code.length);
-    
     console.log('getOnchainStats: Contract obtained, calling getStats for:', playerAddress);
     
-    // Try to call getStats - if it reverts, it might mean no data exists
-    let stats;
-    try {
-      stats = await contract.getStats(playerAddress);
-      console.log('getOnchainStats: Raw stats from contract:', stats);
-    } catch (statsError: any) {
-      console.error('getOnchainStats: Error calling getStats:', statsError);
-      // If the call reverts, it might mean the player has no stats yet
-      // Return zeros instead of null to indicate "no data" vs "error"
-      if (statsError?.code === 'CALL_EXCEPTION') {
-        console.warn('getOnchainStats: Contract call reverted - player may have no stats yet');
-        // Return zeros to indicate no stats exist
-        return {
-          totalGames: 0,
-          wins: 0,
-          losses: 0,
-          winPercentage: 0,
-          lastUpdated: 0,
-          nonce: 0,
-        };
-      }
-      throw statsError;
-    }
+    const stats = await contract.getStats(playerAddress);
+    console.log('getOnchainStats: Raw stats from contract:', stats);
     
-    let winPercentage;
-    try {
-      winPercentage = await contract.getWinPercentage(playerAddress);
-      console.log('getOnchainStats: Win percentage:', winPercentage);
-    } catch (wpError: any) {
-      console.error('getOnchainStats: Error calling getWinPercentage:', wpError);
-      // If getWinPercentage fails, calculate it from stats
-      const total = Number(stats.totalGames);
-      const wins = Number(stats.wins);
-      winPercentage = total > 0 ? (wins / total) * 10000 : 0; // Convert to basis points
-      console.log('getOnchainStats: Calculated win percentage:', winPercentage);
-    }
+    const winPercentage = await contract.getWinPercentage(playerAddress);
+    console.log('getOnchainStats: Win percentage:', winPercentage);
 
     const result = {
       totalGames: Number(stats.totalGames),

@@ -24,15 +24,6 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
   const [displayStats, setDisplayStats] = useState<UserStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [hasFetchedBlockchain, setHasFetchedBlockchain] = useState(false);
-  const [fetchingWalletAddress, setFetchingWalletAddress] = useState<string | null>(null);
-  const [debugStats, setDebugStats] = useState<{
-    totalGames: number;
-    wins: number;
-    losses: number;
-    winPercentage: number;
-  } | null>(null);
-  const [isLoadingDebug, setIsLoadingDebug] = useState(false);
-  const [debugError, setDebugError] = useState<string | null>(null);
 
   // Fetch fresh stats from blockchain when modal opens (blockchain is source of truth)
   useEffect(() => {
@@ -40,7 +31,6 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
     if (!isOpen) {
       setHasFetchedBlockchain(false);
       setDisplayStats(null);
-      setFetchingWalletAddress(null);
       return;
     }
 
@@ -84,7 +74,6 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
 
           const walletAddress = accounts[0];
           console.log('ProfileModal: Using Farcaster wallet address:', walletAddress);
-          setFetchingWalletAddress(walletAddress); // Store for debugging display
 
           const browserProvider = new BrowserProvider(provider);
           const onchainStats = await getOnchainStats(walletAddress, browserProvider);
@@ -328,7 +317,6 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
 
                       const walletAddress = accounts[0];
                       console.log('ProfileModal: Refreshing stats from blockchain for Farcaster wallet:', walletAddress);
-                      setFetchingWalletAddress(walletAddress); // Store for debugging display
                       const browserProvider = new BrowserProvider(provider);
                       const onchainStats = await getOnchainStats(walletAddress, browserProvider);
                       
@@ -420,87 +408,9 @@ export const ProfileModal = ({ isOpen, onClose, userInfo, onStatsUpdate }: Profi
                   </span>
                 </div>
               )}
-              {fetchingWalletAddress && (
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs sm:text-sm text-yellow-600 dark:text-yellow-400">Fetching from:</span>
-                  <span className="text-xs sm:text-sm font-mono font-semibold text-yellow-600 dark:text-yellow-400 break-all">
-                    {fetchingWalletAddress}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
         )}
-
-        {/* Debug section - Fetch stats for specific address */}
-        <div className="mb-3 sm:mb-6 p-3 bg-yellow-900/20 dark:bg-yellow-900/20 rounded-lg border border-yellow-600/50">
-          <div className="text-xs text-yellow-600 dark:text-yellow-400 uppercase tracking-wider mb-2">DEBUG</div>
-          <div className="mb-2">
-            <div className="text-xs text-yellow-600 dark:text-yellow-400 mb-1">Testing address:</div>
-            <div className="text-xs font-mono text-yellow-400 dark:text-yellow-300 break-all mb-2">
-              0xB75A329510A5B53d724944Dea04F5c3B066F7459
-            </div>
-            <button
-              onClick={async () => {
-                setIsLoadingDebug(true);
-                setDebugError(null);
-                setDebugStats(null);
-                try {
-                  const provider = await sdk.wallet.getEthereumProvider();
-                  if (!provider) {
-                    setDebugError('No provider available');
-                    return;
-                  }
-                  const browserProvider = new BrowserProvider(provider);
-                  const testAddress = '0xB75A329510A5B53d724944Dea04F5c3B066F7459';
-                  console.log('Debug: Fetching stats for address:', testAddress);
-                  const onchainStats = await getOnchainStats(testAddress, browserProvider);
-                  console.log('Debug: Stats received:', onchainStats);
-                  if (onchainStats) {
-                    setDebugStats({
-                      totalGames: onchainStats.totalGames,
-                      wins: onchainStats.wins,
-                      losses: onchainStats.losses,
-                      winPercentage: onchainStats.winPercentage,
-                    });
-                    if (onchainStats.totalGames === 0 && onchainStats.wins === 0 && onchainStats.losses === 0) {
-                      setDebugError('Contract call succeeded but returned zeros - player may have no stats yet, or contract call reverted');
-                    }
-                  } else {
-                    setDebugError('getOnchainStats returned null - check console for details');
-                  }
-                } catch (error: any) {
-                  console.error('Debug: Error fetching stats:', error);
-                  setDebugError(`Error: ${error?.message || error?.code || String(error)}`);
-                  setDebugStats(null);
-                } finally {
-                  setIsLoadingDebug(false);
-                }
-              }}
-              disabled={isLoadingDebug}
-              className="text-xs bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 text-white px-2 py-1 rounded"
-            >
-              {isLoadingDebug ? 'Loading...' : 'Fetch Stats'}
-            </button>
-          </div>
-          {debugError && (
-            <div className="mt-2 text-xs text-red-400 dark:text-red-300">
-              <div className="font-semibold mb-1">Error:</div>
-              <div className="break-all">{debugError}</div>
-            </div>
-          )}
-          {debugStats && (
-            <div className="mt-2 text-xs">
-              <div className="text-yellow-400 dark:text-yellow-300 font-semibold mb-1">Stats from blockchain:</div>
-              <div className="space-y-1 text-yellow-300 dark:text-yellow-200">
-                <div>Total Games: <span className="font-bold">{debugStats.totalGames}</span></div>
-                <div>Wins: <span className="font-bold">{debugStats.wins}</span></div>
-                <div>Losses: <span className="font-bold">{debugStats.losses}</span></div>
-                <div>Win %: <span className="font-bold">{debugStats.winPercentage.toFixed(1)}%</span></div>
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* Statistics in card style */}
         <div className="mb-3 sm:mb-6">
