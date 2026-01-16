@@ -4,7 +4,7 @@ import { BrowserProvider } from 'ethers';
 import { GameState, UserStats, Letter, LetterState, UserInfo } from './types';
 import { getRandomWord, isValidWord } from './data/words';
 import { evaluateGuess, wordToLetters } from './utils/gameLogic';
-import { saveGameState, loadGameState, saveStats, loadStats, saveLastPlayedDate, resetStats, clearGameState, migrateLegacyStats, saveLastSubmitted } from './utils/storage';
+import { saveGameState, loadGameState, saveStats, loadStats, saveLastPlayedDate, resetStats, clearGameState, migrateLegacyStats, saveLastSubmitted, loadLastSubmitted } from './utils/storage';
 import { submitStatsOnchain, getOnchainStats } from './utils/contract';
 import { GameBoard } from './components/GameBoard';
 import { Keyboard } from './components/Keyboard';
@@ -143,6 +143,14 @@ function App() {
                   losses: onchainStats.losses,
                   nonce: onchainStats.nonce, // Nonce fetched from blockchain contract
                 }, user.fid);
+                
+                // Debug: Show expectedNonce that will be used when game ends
+                console.log('[DEBUG] Nonce fetched from blockchain and saved:', {
+                  nonce: onchainStats.nonce,
+                  expectedNonce: onchainStats.nonce, // This will be used as expectedNonce when game ends
+                  walletAddress: newUserInfo.walletAddress,
+                  fid: user.fid
+                });
               } else {
                 // Blockchain fetch failed, use local storage as fallback
                 userStats = loadStats(user.fid);
@@ -162,6 +170,27 @@ function App() {
         }
         
         setStats(userStats);
+
+        // Debug: Show expectedNonce from local storage (will be used when game ends)
+        const lastSubmitted = loadLastSubmitted(user.fid);
+        if (lastSubmitted) {
+          console.log('[DEBUG] ExpectedNonce from local storage (will be used when game ends):', {
+            expectedNonce: lastSubmitted.nonce,
+            lastSubmitted: {
+              games: lastSubmitted.games,
+              wins: lastSubmitted.wins,
+              losses: lastSubmitted.losses,
+              nonce: lastSubmitted.nonce
+            },
+            fid: user.fid,
+            walletAddress: newUserInfo?.walletAddress || 'No wallet'
+          });
+        } else {
+          console.log('[DEBUG] No lastSubmitted found in local storage. ExpectedNonce will be 0 for first submission.', {
+            fid: user.fid,
+            walletAddress: newUserInfo?.walletAddress || 'No wallet'
+          });
+        }
 
         // Load saved game state for this FID
         const savedGameState = loadGameState(user.fid);
