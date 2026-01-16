@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
+import { BrowserProvider } from 'ethers';
 import { GameState, UserStats, Letter, LetterState, UserInfo } from './types';
 import { getRandomWord, isValidWord } from './data/words';
 import { evaluateGuess, wordToLetters } from './utils/gameLogic';
-import { saveGameState, loadGameState, saveStats, loadStats, saveLastPlayedDate, resetStats, clearGameState, migrateLegacyStats } from './utils/storage';
+import { saveGameState, loadGameState, saveStats, loadStats, saveLastPlayedDate, resetStats, clearGameState, migrateLegacyStats, isNewUser } from './utils/storage';
+import { submitStatsOnchain } from './utils/contract';
 import { GameBoard } from './components/GameBoard';
 import { Keyboard } from './components/Keyboard';
 import { StatsModal } from './components/StatsModal';
@@ -108,6 +110,26 @@ function App() {
         // Load stats and game state for this FID
         const userStats = loadStats(user.fid);
         setStats(userStats);
+
+        // Check if this is a new user (no blockchain submission yet) with initial stats
+        const isNew = isNewUser(user.fid);
+        const hasInitialStats = userStats.totalGames === 0 && userStats.wins === 0 && userStats.losses === 0;
+        
+        // If new user with initial stats and has wallet, automatically submit to blockchain
+        if (isNew && hasInitialStats && newUserInfo.walletAddress) {
+          // Submit initial stats (0, 0, 0, 0) to blockchain on first open
+          try {
+            const provider = await sdk.wallet.getEthereumProvider();
+            if (provider) {
+              const browserProvider = new BrowserProvider(provider);
+              // This will automatically show transaction popup
+              await submitStatsOnchain(userStats, newUserInfo.walletAddress, browserProvider, user.fid);
+            }
+          } catch (error) {
+            // Silently handle errors - user can manually submit later
+            console.log('Auto-submit initial stats error:', error);
+          }
+        }
 
         // Load saved game state for this FID
         const savedGameState = loadGameState(user.fid);
@@ -282,6 +304,33 @@ function App() {
   }, [gameState]);
 
   /**
+   * Automatically submit stats to blockchain
+   * This is called after game ends and on first open for new users
+   * Local stats are already saved, so if transaction is cancelled, stats remain updated
+   */
+  const autoSubmitStats = useCallback(async (statsToSubmit: UserStats, currentUserInfo: UserInfo | null) => {
+    // Only submit if user has wallet connected
+    if (!currentUserInfo?.walletAddress || !currentUserInfo?.fid) {
+      return;
+    }
+
+    try {
+      const provider = await sdk.wallet.getEthereumProvider();
+      if (!provider) {
+        return;
+      }
+
+      const browserProvider = new BrowserProvider(provider);
+      // This will automatically show transaction popup
+      // If user cancels, local stats remain updated (already saved)
+      await submitStatsOnchain(statsToSubmit, currentUserInfo.walletAddress, browserProvider, currentUserInfo.fid);
+    } catch (error) {
+      // Silently handle errors - local stats are already updated
+      console.log('Auto-submit stats error (local stats still updated):', error);
+    }
+  }, []);
+
+  /**
    * Update user statistics
    */
   const updateStats = (won: boolean) => {
@@ -300,6 +349,11 @@ function App() {
         : 0;
 
       saveStats(newStats, userInfo?.fid ?? null);
+      
+      // Automatically submit stats to blockchain after game ends
+      // Local stats are already saved, so if transaction is cancelled, stats remain updated
+      autoSubmitStats(newStats, userInfo);
+      
       return newStats;
     });
   };

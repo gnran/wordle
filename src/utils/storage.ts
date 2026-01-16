@@ -182,6 +182,14 @@ export const clearLastSubmitted = (fid: number | null = null): void => {
 };
 
 /**
+ * Check if user is new (has never submitted stats to blockchain)
+ */
+export const isNewUser = (fid: number | null = null): boolean => {
+  const lastSubmitted = loadLastSubmitted(fid);
+  return lastSubmitted === null;
+};
+
+/**
  * Migrate legacy stats to FID-based storage
  * This should be called when a user logs in for the first time
  */
