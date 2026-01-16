@@ -20,6 +20,6 @@
       "ogTitle": "Wordle",
       "ogDescription": "Classic Wordle game — guess the word in 6 attempts. Test your vocabulary!",
       "ogImageUrl": "https://wordle-six-orcin.vercel.app/promotional.png",
-      "noindex": true
+      "noindex": false
     }
   }
